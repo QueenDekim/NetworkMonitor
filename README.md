@@ -36,8 +36,8 @@ first run `network_monitor.py` and specify the network and ports to scan
 For example:
 ```
 Enter the network to scan (e.g., 192.168.1.0/24): 192.168.0.0/24
-Enter the ports to scan (e.g., 22,80,443): 21,22,80,443,137-139
-Starting scan on network 192.168.0.0/24 with ports 21,22,80,443,137-139...
+Enter the ports to scan (e.g., 22,80,443): 21
+Starting scan on network 192.168.0.0/24 with ports 21...
 Scan completed.
 Found device: 192.168.0.1
 Found device: 192.168.0.100
