@@ -33,7 +33,25 @@ if __name__ == '__main__':
 ```
 
 first run `network_monitor.py` and specify the network and ports to scan, then run `rest_api.py`
-
+For example:
+```
+Enter the network to scan (e.g., 192.168.1.0/24): 192.168.0.0/24
+Enter the ports to scan (e.g., 22,80,443): 21,22,80,443,137-139
+Starting scan on network 192.168.0.0/24 with ports 21,22,80,443,137-139...
+Scan completed.
+Found device: 192.168.0.1
+Found device: 192.168.0.100
+Found device: 192.168.0.101
+Found device: 192.168.0.102
+Found device: 192.168.0.103
+Found device: 192.168.0.104
+Found device: 192.168.0.106
+Found device: 192.168.0.107
+Found device: 192.168.0.128
+Found device: 192.168.0.129
+Found device: 192.168.0.140
+Waiting for 2 minutes before next scan...
+```
 
 after information about the found devices appears in the `network_monitor.py` console, try making a `GET` request to `<your ip>:<port(default 5150)>/api/scans`
 
