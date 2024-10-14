@@ -32,7 +32,8 @@ if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5150)
 ```
 
-first run `network_monitor.py`, then `rest_api.py`
+first run `network_monitor.py` and specify the network and ports to scan, then run `rest_api.py`
+
 
 after information about the found devices appears in the `network_monitor.py` console, try making a `GET` request to `<your ip>:<port(default 5150)>/api/scans`
 
