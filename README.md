@@ -27,14 +27,14 @@ conn = mysql.connector.connect(
 ```
 
 in the `rest_api.py` file we configure `Flusk`, or leave it as is:
-```
+```py
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5150)
 ```
 
 first run `network_monitor.py` and specify the network and ports to scan
 For example:
-```
+```shell
 Enter the network to scan (e.g., 192.168.1.0/24): 192.168.0.0/24
 Enter the ports to scan (e.g., 22,80,443): 21
 Starting scan on network 192.168.0.0/24 with ports 21...
@@ -57,7 +57,7 @@ Then run `rest_api.py`
 after information about the found devices appears in the `network_monitor.py` console, try making a `GET` request to `<your ip>:<port(default 5150)>/api/scans`
 
 We receive the response in `Json` format:
-```
+```json
 {
     "device_info": "{\"ports\": [{\"name\": \"ftp\", \"port\": 21, \"state\": \"filtered\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
     "id": 1,
