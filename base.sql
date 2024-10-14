@@ -6,5 +6,6 @@ CREATE TABLE scans (
     ip VARCHAR(15),
     status VARCHAR(10),
     device_info JSON,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    Verify
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP()
 );
