@@ -21,9 +21,9 @@ def scan_network(network, ports):
     try:
         print("Connecting to Database...")
         conn = pymysql.connect(
-            host='10.10.123.7',
-            user='dekim',
-            password='sisari00',
+            host='localhost',
+            user='user',
+            password='password',
             database='network_monitoring'
         )
         cursor = conn.cursor()
