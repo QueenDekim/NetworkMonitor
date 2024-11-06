@@ -1,3 +1,4 @@
 python-nmap
-mysql-connector-python
+PyMySQL
 flask
+cryptography
