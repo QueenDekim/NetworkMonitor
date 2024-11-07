@@ -34,6 +34,8 @@ def scan_network(network, ports):
 
     try:
         if nm.all_hosts():
+            found_hosts = set()  # Хранит IP-адреса найденных устройств
+
             for host in nm.all_hosts():
                 print(f"Found device: {host}")
 
@@ -73,6 +75,20 @@ def scan_network(network, ports):
                         (host, status, device_info_json)
                     )
                     print(f"Inserted information about {host}")
+
+                found_hosts.add(host)  # Добавляем найденный хост в множество
+
+            # Обновляем статус на 'down' для всех не найденных хостов
+            cursor.execute("SELECT ip FROM scans")
+            all_hosts = cursor.fetchall()
+            for (ip,) in all_hosts:
+                if ip not in found_hosts:
+                    cursor.execute(
+                        "UPDATE scans SET status = 'down' WHERE ip = %s",
+                        (ip,)
+                    )
+                    print(f"Set status to 'down' for {ip}")
+
             conn.commit()
             print("Database updated successfully.")
         else:
@@ -88,8 +104,12 @@ def scan_network(network, ports):
 if __name__ == "__main__":
     network = input("Enter the network to scan (e.g., 192.168.1.0/24): ")
     ports = input("Enter the ports to scan (e.g., 22,80,443): ")
+    interval = input("Scan interval (minutes)  (e.g., 1): ")
 
-    while True:
-        scan_network(network, ports)
-        print("Waiting for 2 minutes before next scan...")
-        time.sleep(120)
+    try:
+        while True:
+            scan_network(network, ports)
+            print(f"Waiting for {interval} minutes before next scan...")
+            time.sleep(int(interval) * 60)
+    except KeyboardInterrupt:
+        print("\nScan interrupted by user. Exiting...")
