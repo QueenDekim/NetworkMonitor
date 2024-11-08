@@ -39,7 +39,7 @@ FLASK_CONFIG = {
 }
 ```
 
-first run `network_monitor.py` and specify the network and ports to scan
+Run `network_monitor.py` and specify the network, ports and interval to scan
 For example:
 ```log
 [API] REST API started at http://0.0.0.0:5000/api/scans
@@ -62,9 +62,9 @@ Scan interval (minutes)  (e.g., 1): 1
 [Info] Waiting for 1.0 minutes before next scan...
 ```
 
-after information about the found devices appears, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
+After information about the found devices appears, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
 
-We receive the response in `Json` format:
+Response in `Json` format:
 ```json
 [
   1,
