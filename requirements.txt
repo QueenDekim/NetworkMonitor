@@ -2,3 +2,4 @@ python-nmap
 PyMySQL
 flask
 cryptography
+colorama
