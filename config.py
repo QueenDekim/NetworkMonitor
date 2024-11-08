@@ -1,4 +1,3 @@
-# Данные для подключения к базе данных
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'user',
@@ -6,7 +5,10 @@ DB_CONFIG = {
     'database': 'network_monitoring'
 }
 
-# Параметры запуска Flask
+VENV = {
+    'PATH': '.\\venv',
+}
+
 FLASK_CONFIG = {
     'HOST': '0.0.0.0',
     'PORT': 5000,
