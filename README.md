@@ -25,7 +25,6 @@ DB_CONFIG = {
     'database': 'network_monitoring'
 }
 
-# Параметры запуска Flask
 FLASK_CONFIG = {
     'HOST': '0.0.0.0',
     'PORT': 5000,
