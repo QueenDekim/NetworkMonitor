@@ -7,6 +7,8 @@
 ```shell
 git clone https://github.com/QueenDekim/NetworkMonitor.git
 cd ./NetworkMonitor
+python -m venv venv
+.\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -15,6 +17,7 @@ Install `mysql` and execute the command from the `base.sql` file in it
 Install `nmap`:
  - Windows - [installer (exe)](https://nmap.org/dist/nmap-7.95-setup.exe)
  - Ubuntu - `sudo apt install nmap`
+ - Other OS - [link](https://nmap.org/book/inst-other-platforms.html)
 
 In the `config.py` file change the login details in `MySQL` and flask configuration:
 ```py
@@ -23,6 +26,10 @@ DB_CONFIG = {
     'user': 'user',
     'password': 'password',
     'database': 'network_monitoring'
+}
+
+VENV = {
+    'PATH': '.\\venv',
 }
 
 FLASK_CONFIG = {
@@ -35,12 +42,12 @@ FLASK_CONFIG = {
 first run `network_monitor.py` and specify the network and ports to scan
 For example:
 ```log
+[API] REST API started at http://0.0.0.0:5000/api/scans
 Enter the network to scan (e.g., 192.168.1.0/24): 10.10.123.0/24
 Enter the ports to scan (e.g., 22,80,443): 22,80,443
-Scan interval (minutes)  (e.g., 1): 0.33
+Scan interval (minutes)  (e.g., 1): 1
 [nmap] Starting scan on network 10.10.123.0/24 with ports 22,80,443...
 [nmap] Scan completed.
-[db] Connecting to Database...
 [db] Database connection established.
 [nmap] Found device: 10.10.123.1
 [db] Updated information about 10.10.123.1
@@ -52,11 +59,10 @@ Scan interval (minutes)  (e.g., 1): 0.33
 [db] Updated information about 10.10.123.9
 [db] Database updated successfully.
 [db] Connection closed.
-[Info] Waiting for 19.8 seconds before next scan...
+[Info] Waiting for 1.0 minutes before next scan...
 ```
-Then run `rest_api.py`
 
-after information about the found devices appears in the `network_monitor.py` console, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
+after information about the found devices appears, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
 
 We receive the response in `Json` format:
 ```json
