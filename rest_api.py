@@ -1,16 +1,17 @@
 from flask import Flask, jsonify
-import mysql.connector
+import pymysql
+from config import DB_CONFIG, FLASK_CONFIG
 
 app = Flask(__name__)
 
 def get_scan_data():
-    conn = mysql.connector.connect(
-        host='localhost',
-        user='username',
-        password='password',
-        database='network_monitoring'
-    )
-    cursor = conn.cursor(dictionary=True)
+    conn = pymysql.connect(
+            host=DB_CONFIG['host'],
+            user=DB_CONFIG['user'],
+            password=DB_CONFIG['password'],
+            database=DB_CONFIG['database']
+        )
+    cursor = conn.cursor()
     cursor.execute("SELECT * FROM scans ORDER BY timestamp DESC")
     rows = cursor.fetchall()
     cursor.close()
@@ -23,4 +24,4 @@ def get_scans():
     return jsonify(data)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5150) 
+    app.run(debug=FLASK_CONFIG['DEBUG'], host=FLASK_CONFIG['HOST'], port=FLASK_CONFIG['PORT']) 
