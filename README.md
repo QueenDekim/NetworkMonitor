@@ -56,7 +56,7 @@ Scan interval (minutes)  (e.g., 1): 0.33
 ```
 Then run `rest_api.py`
 
-after information about the found devices appears in the `network_monitor.py` console, try making a `GET` request to `<your ip>:<port(default 5150)>/api/scans`
+after information about the found devices appears in the `network_monitor.py` console, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
 
 We receive the response in `Json` format:
 ```json
