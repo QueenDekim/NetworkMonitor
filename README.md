@@ -2,7 +2,7 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits)
 ![GitHub Repo stars](https://img.shields.io/github/stars/QueenDekim/NetworkMonitor)
 
-# NetworkMonitor(nmap) + RestAPI(flusk)
+# NetworkMonitor(nmap) + RestAPI(flask)
 
 ```shell
 git clone https://github.com/QueenDekim/NetworkMonitor.git
