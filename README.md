@@ -16,41 +16,44 @@ Install `nmap`:
  - Windows - [installer (exe)](https://nmap.org/dist/nmap-7.95-setup.exe)
  - Ubuntu - `sudo apt install nmap`
 
-In the `.py` files change the login details in `MySQL`:
+In the `config.py` file change the login details in `MySQL` and flask configuration:
 ```py
-conn = mysql.connector.connect(
-    host='localhost',
-    user='username',
-    password='password',
-    database='network_monitoring'
-)
-```
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'user',
+    'password': 'password',
+    'database': 'network_monitoring'
+}
 
-in the `rest_api.py` file we configure `Flusk`, or leave it as is:
-```py
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5150)
+# Параметры запуска Flask
+FLASK_CONFIG = {
+    'HOST': '0.0.0.0',
+    'PORT': 5000,
+    'DEBUG': True
+}
 ```
 
 first run `network_monitor.py` and specify the network and ports to scan
 For example:
 ```shell
-Enter the network to scan (e.g., 192.168.1.0/24): 192.168.0.0/24
-Enter the ports to scan (e.g., 22,80,443): 21
-Starting scan on network 192.168.0.0/24 with ports 21...
-Scan completed.
-Found device: 192.168.0.1
-Found device: 192.168.0.100
-Found device: 192.168.0.101
-Found device: 192.168.0.102
-Found device: 192.168.0.103
-Found device: 192.168.0.104
-Found device: 192.168.0.106
-Found device: 192.168.0.107
-Found device: 192.168.0.128
-Found device: 192.168.0.129
-Found device: 192.168.0.140
-Waiting for 2 minutes before next scan...
+Enter the network to scan (e.g., 192.168.1.0/24): 10.10.123.0/24
+Enter the ports to scan (e.g., 22,80,443): 22,80,443
+Scan interval (minutes)  (e.g., 1): 0.33
+[nmap] Starting scan on network 10.10.123.0/24 with ports 22,80,443...
+[nmap] Scan completed.
+[db] Connecting to Database...
+[db] Database connection established.
+[nmap] Found device: 10.10.123.1
+[db] Updated information about 10.10.123.1
+[nmap] Found device: 10.10.123.7
+[db] Updated information about 10.10.123.7
+[nmap] Found device: 10.10.123.8
+[db] Updated information about 10.10.123.8
+[nmap] Found device: 10.10.123.9
+[db] Updated information about 10.10.123.9
+[db] Database updated successfully.
+[db] Connection closed.
+[Info] Waiting for 19.8 seconds before next scan...
 ```
 Then run `rest_api.py`
 
@@ -58,13 +61,13 @@ after information about the found devices appears in the `network_monitor.py` co
 
 We receive the response in `Json` format:
 ```json
-{
-    "device_info": "{\"ports\": [{\"name\": \"ftp\", \"port\": 21, \"state\": \"filtered\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
-    "id": 1,
-    "ip": "192.168.0.1",
-    "status": "up",
-    "timestamp": "Mon, 14 Oct 2024 09:38:47 GMT"
-},
+[
+  1,
+  "10.10.123.1",
+  "up",
+  "{\"ports\": [{\"name\": \"ssh\", \"port\": 22, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"http\", \"port\": 80, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"https\", \"port\": 443, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
+  "Fri, 08 Nov 2024 07:07:50 GMT"
+],
 ```
 
 |                                                links                                                                         |                                 description                                         |
