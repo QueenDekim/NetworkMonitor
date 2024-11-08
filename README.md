@@ -34,7 +34,7 @@ FLASK_CONFIG = {
 
 first run `network_monitor.py` and specify the network and ports to scan
 For example:
-```shell
+```log
 Enter the network to scan (e.g., 192.168.1.0/24): 10.10.123.0/24
 Enter the ports to scan (e.g., 22,80,443): 22,80,443
 Scan interval (minutes)  (e.g., 1): 0.33
