@@ -178,7 +178,10 @@ if __name__ == "__main__":
         while True:
             scan_network(network, ports)  # Perform the network scan
             wait_time = float(interval) * 60
-            print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
+            if interval < 1:
+                print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
+            else:
+                print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
             time.sleep(wait_time)  # Wait for the specified interval before the next scan
     except KeyboardInterrupt:
         print("\nScan interrupted by user. Exiting...")
