@@ -172,7 +172,7 @@ if __name__ == "__main__":
     start_api()  # Start the API
     network = get_user_input("Enter the network to scan " + Fore.CYAN + "(e.g., 192.168.1.0/24): " + Fore.WHITE)
     ports = get_user_input("Enter the ports to scan " + Fore.CYAN + "(e.g., 22,80,443): " + Fore.WHITE)
-    interval = get_user_input("Scan interval (minutes)  " + Fore.CYAN + "(e.g., 1): " + Fore.WHITE)
+    interval = float(get_user_input("Scan interval (minutes)  " + Fore.CYAN + "(e.g., 1): " + Fore.WHITE))
 
     try:
         while True:
