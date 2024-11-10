@@ -19,7 +19,7 @@ Install `nmap`:
  - Ubuntu - `sudo apt install nmap`
  - Other OS - [link](https://nmap.org/book/inst-other-platforms.html)
 
-~~In the `config.py` file change the login details in `MySQL` and flask configuration~~ [DEPRECATED]:
+~~In the `config.py` file change the login details in `MySQL` and flask configuration~~ **[DEPRECATED]**:
 ```py
 DB_CONFIG = {
     'host': 'localhost',
