@@ -177,7 +177,6 @@ def configure_settings():
     db_host = get_user_input("Database Host (default: localhost): ", "localhost")
     db_user = get_user_input("Database User (default: root): ", "root")
     
-    # Используем getpass для ввода пароля, чтобы скрыть его
     db_password = getpass.getpass("Database Password (default: password): ") or "password"
     
     db_name = get_user_input("Database Name (default: network_monitoring): ", "network_monitoring")
@@ -186,16 +185,13 @@ def configure_settings():
     flask_host = get_user_input("Flask Host (default: 0.0.0.0): ", "0.0.0.0")
     flask_port = int(get_user_input("Flask Port (default: 5000): ", "5000"))
     
-    # Получаем ввод для режима отладки
     flask_debug_input = get_user_input("Flask Debug (default: True): ", "True")
-    flask_debug = flask_debug_input.lower() in ['true', '1', 'yes']  # Булевое значение для внутреннего использования
+    flask_debug = flask_debug_input.lower() in ['true', '1', 'yes']
     
-    # Добавляем поля для конфигурации сканирования
     default_network = get_user_input("Default Network to Scan (default: 192.168.1.0/24): ", "192.168.1.0/24")
     default_ports = get_user_input("Default Ports to Scan (default: 22,80,443): ", "22,80,443")
     default_interval = float(get_user_input("Default Scan Interval (minutes, default: 1): ", "1"))
 
-    # Создаем конфигурационный словарь
     config_data = {
         "DB_CONFIG": {
             "host": db_host,
@@ -218,7 +214,6 @@ def configure_settings():
         }
     }
 
-    # Сохраняем конфигурацию в config.py
     with open('config.py', 'w') as config_file:
         config_file.write("DB_CONFIG = ")
         config_file.write(json.dumps(config_data["DB_CONFIG"], indent=4))
