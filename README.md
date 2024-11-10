@@ -19,7 +19,7 @@ Install `nmap`:
  - Ubuntu - `sudo apt install nmap`
  - Other OS - [link](https://nmap.org/book/inst-other-platforms.html)
 
-In the `config.py` file change the login details in `MySQL` and flask configuration:
+~~In the `config.py` file change the login details in `MySQL` and flask configuration~~ [DEPRECATED]:
 ```py
 DB_CONFIG = {
     'host': 'localhost',
@@ -37,15 +37,45 @@ FLASK_CONFIG = {
     'PORT': 5000,
     'DEBUG': True
 }
+
+SCAN_CONFIG = {
+    "DEFAULT_NETWORK": "192.168.1.0/24",
+    "DEFAULT_PORTS": "22,80,443",
+    "DEFAULT_INTERVAL": 1.0
+}
 ```
 
-Run `network_monitor.py` and specify the network, ports and interval to scan
-For example:
+Run `network_monitor.py` and select Configure or Scan
+```
+Choose an option:
+1. Configure
+2. Scan
+Enter your choice:
+```
+
+In `Configure`, you can enter data for logging into the database, Flask parameters (API), and standard values for the fields for entering scan parameters (if you press `Enter` without specifying the data, the default value will be used):
+```log
+[Config] Configure your settings:
+Database Host (default: localhost):
+Database User (default: root): user
+Database Password (default: password):
+Database Name (default: network_monitoring):
+Virtual Environment Path (default: .\venv):
+Flask Host (default: 0.0.0.0):
+Flask Port (default: 5000):
+Flask Debug (default: True):
+Default Network to Scan (default: 192.168.1.0/24): 10.10.123.0/24
+Default Ports to Scan (default: 22,80,443): 22,80,443
+Default Scan Interval (minutes, default: 1): 1
+[Config] Configuration saved to config.py.
+```
+
+In the `Scan`, specify the scan parameters (if you press `Enter` without specifying the data, the default value will be used):
 ```log
 [API] REST API started at http://0.0.0.0:5000/api/scans
-Enter the network to scan (e.g., 192.168.1.0/24): 10.10.123.0/24
-Enter the ports to scan (e.g., 22,80,443): 22,80,443
-Scan interval (minutes)  (e.g., 1): 1
+Enter the network to scan (default: 192.168.1.0/24): 10.10.123.0/24
+Enter the ports to scan (default: 22,80,443):
+Scan interval (minutes)  (default: 1):
 [nmap] Starting scan on network 10.10.123.0/24 with ports 22,80,443...
 [nmap] Scan completed.
 [db] Database connection established.
