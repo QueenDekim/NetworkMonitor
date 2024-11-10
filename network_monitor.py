@@ -56,15 +56,23 @@ def get_user_input(prompt, default_value=None):
         return user_input if user_input else default_value
     except KeyboardInterrupt:
         print("\nInterrupted by user. Exiting...")
-        terminate_api()
-        exit(0)
+        return None
+    except EOFError:
+        print("\nEnd of file reached. Exiting...")
+        return None
 
 def terminate_api():
     """Terminates the API process if it's running."""
+    global api_started
     if api_started:
-        process.terminate()
-        process.wait()
-        print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API process terminated.")
+        try:
+            process.terminate()
+            process.wait()
+            time.sleep(5)
+            print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API process terminated.")
+            api_started = False
+        except KeyboardInterrupt:
+            print(Fore.RED + "[ERR]" + Fore.WHITE + " Failed to terminate the API process.")
 
 def scan_network(network, ports):
     """Scans the specified network for devices and updates the database."""
@@ -205,7 +213,7 @@ def configure_settings():
         "FLASK_CONFIG": {
             "HOST": flask_host,
             "PORT": flask_port,
-            "DEBUG": flask_debug  # Сохраняем булевое значение
+            "DEBUG": flask_debug
         },
         "SCAN_CONFIG": {
             "DEFAULT_NETWORK": default_network,
@@ -214,6 +222,7 @@ def configure_settings():
         }
     }
 
+    # Сохраняем конфигурацию в config.py
     with open('config.py', 'w') as config_file:
         config_file.write("DB_CONFIG = ")
         config_file.write(json.dumps(config_data["DB_CONFIG"], indent=4))
@@ -222,6 +231,7 @@ def configure_settings():
         config_file.write(json.dumps(config_data["VENV"], indent=4))
         config_file.write("\n\n")
         config_file.write("FLASK_CONFIG = ")
+        # Записываем DEBUG как True/False
         config_file.write(f"{{'HOST': '{flask_host}', 'PORT': {flask_port}, 'DEBUG': {str(flask_debug).capitalize()}}}\n")
         config_file.write("\nSCAN_CONFIG = ")
         config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))
@@ -229,27 +239,34 @@ def configure_settings():
     print(Fore.GREEN + "[Config]" + Fore.WHITE + " Configuration saved to config.py.")
 
 if __name__ == "__main__":
-    while True:
-        choice = get_user_input("Choose an option:\n1. Configure\n2. Scan\nEnter your choice: ", "2")
-        if choice == "1":
-            configure_settings()
-        elif choice == "2":
-            start_api()  # Start the API
-            network = get_user_input("Enter the network to scan " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_NETWORK']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_NETWORK']}")
-            ports = get_user_input("Enter the ports to scan " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_PORTS']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_PORTS']}")
-            interval = float(get_user_input("Scan interval (minutes)  " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_INTERVAL']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_INTERVAL']}"))
+    try:
+        while True:
+            choice = get_user_input("Choose an option:\n1. Configure\n2. Scan\nEnter your choice: ", "2")
+            if choice is None:
+                break
+            if choice == "1":
+                configure_settings()
+            elif choice == "2":
+                start_api()  # Start the API
+                network = get_user_input("Enter the network to scan " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_NETWORK']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_NETWORK']}")
+                ports = get_user_input("Enter the ports to scan " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_PORTS']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_PORTS']}")
+                interval = float(get_user_input("Scan interval (minutes)  " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_INTERVAL']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_INTERVAL']}"))
 
-            try:
-                while True:
-                    scan_network(network, ports)  # Perform the network scan
-                    wait_time = float(interval) * 60
-                    if interval < 1:
-                        print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
-                    else:
-                        print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
-                    time.sleep(wait_time)  # Wait for the specified interval before the next scan
-            except KeyboardInterrupt:
-                print("\nScan interrupted by user. Exiting...")
-                terminate_api()  # Terminate the API process if running
-        else:
-            print(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1 or 2.")
+                try:
+                    while True:
+                        scan_network(network, ports)  # Perform the network scan
+                        wait_time = float(interval) * 60
+                        if interval < 1:
+                            print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
+                        else:
+                            print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
+                        time.sleep(wait_time)  # Wait for the specified interval before the next scan
+                except KeyboardInterrupt:
+                    print("\nScan interrupted by user. Exiting...")
+                    terminate_api()  # Terminate the API process if running
+            else:
+                print(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1 or 2.")
+    except KeyboardInterrupt:
+        print("\nProgram interrupted by user. Exiting...")
+    finally:
+        terminate_api()  # Terminate the API process if running
