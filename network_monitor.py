@@ -191,24 +191,25 @@ def update_device_status(cursor, found_hosts):
 def configure_settings():
     """Function to configure database and other settings."""
     print(Fore.YELLOW + "[Config]" + Fore.WHITE + " Configure your settings:")
+    print(Fore.GREEN + "Database parameters: " + Fore.WHITE)
+    db_host = get_user_input(f"Database Host (default: {DB_CONFIG['host']}): ", f"{DB_CONFIG['host']}")
+    db_user = get_user_input(f"Database User (default: {DB_CONFIG['user']}): ", f"{DB_CONFIG['user']}")
+    db_password = getpass.getpass("Database Password (default: password): ") or "password"    
+    db_name = get_user_input(f"Database Name (default: {DB_CONFIG['database']}): ", f"{DB_CONFIG['database']}")
     
-    db_host = get_user_input("Database Host (default: localhost): ", "localhost")
-    db_user = get_user_input("Database User (default: root): ", "root")
+    print(Fore.GREEN + "Env parameters: " + Fore.WHITE)
+    venv_path = get_user_input(f"Virtual Environment Path (default: {VENV['PATH']}): ", f"{VENV['PATH']}")
     
-    db_password = getpass.getpass("Database Password (default: password): ") or "password"
-    
-    db_name = get_user_input("Database Name (default: network_monitoring): ", "network_monitoring")
-    
-    venv_path = get_user_input("Virtual Environment Path (default: .\\venv): ", ".\\venv")
-    flask_host = get_user_input("Flask Host (default: 0.0.0.0): ", "0.0.0.0")
-    flask_port = int(get_user_input("Flask Port (default: 5000): ", "5000"))
-    
-    flask_debug_input = get_user_input("Flask Debug (default: True): ", "True")
+    print(Fore.GREEN + "Flask parameters: " + Fore.WHITE)
+    flask_host = get_user_input(f"Flask Host (default: {FLASK_CONFIG['HOST']}): ", f"{FLASK_CONFIG['HOST']}")
+    flask_port = int(get_user_input(f"Flask Port (default: {FLASK_CONFIG['PORT']}): ", f"{FLASK_CONFIG['PORT']}"))
+    flask_debug_input = get_user_input(f"Flask Debug (default: {FLASK_CONFIG['DEBUG']}): ", f"{FLASK_CONFIG['DEBUG']}")
     flask_debug = flask_debug_input.lower() in ['true', '1', 'yes']
     
-    default_network = get_user_input("Default Network to Scan (default: 192.168.1.0/24): ", "192.168.1.0/24")
-    default_ports = get_user_input("Default Ports to Scan (default: 22,80,443): ", "22,80,443")
-    default_interval = float(get_user_input("Default Scan Interval (minutes, default: 1): ", "1"))
+    print(Fore.GREEN + "Default values: " + Fore.WHITE)
+    default_network = get_user_input(f"Default Network to Scan (default: {SCAN_CONFIG['DEFAULT_NETWORK']}): ", f"{SCAN_CONFIG['DEFAULT_NETWORK']}")
+    default_ports = get_user_input(f"Default Ports to Scan (default: {SCAN_CONFIG['DEFAULT_PORTS']}): ", f"{SCAN_CONFIG['DEFAULT_PORTS']}")
+    default_interval = float(get_user_input(f"Default Scan Interval (minutes, default: {SCAN_CONFIG['DEFAULT_INTERVAL']}): ", f"{SCAN_CONFIG['DEFAULT_INTERVAL']}"))
 
     config_data = {
         "DB_CONFIG": {
@@ -232,7 +233,6 @@ def configure_settings():
         }
     }
 
-    # Сохраняем конфигурацию в config.py
     with open('config.py', 'w') as config_file:
         config_file.write("DB_CONFIG = ")
         config_file.write(json.dumps(config_data["DB_CONFIG"], indent=4))
@@ -241,7 +241,6 @@ def configure_settings():
         config_file.write(json.dumps(config_data["VENV"], indent=4))
         config_file.write("\n\n")
         config_file.write("FLASK_CONFIG = ")
-        # Записываем DEBUG как True/False
         config_file.write(f"{{'HOST': '{flask_host}', 'PORT': {flask_port}, 'DEBUG': {str(flask_debug).capitalize()}}}\n")
         config_file.write("\nSCAN_CONFIG = ")
         config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))
