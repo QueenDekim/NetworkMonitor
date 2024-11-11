@@ -110,9 +110,9 @@ def process_scan_results(nm, cursor):
     found_hosts = set()
 
     for host in nm.all_hosts():
-        print(Fore.YELLOW + "[nmap]" + Fore.WHITE + f" Found device: " + Fore.CYAN + f"{host}")
         status = nm[host].state()
-        device_info_json = get_device_info_json(nm, host)
+        device_info_json, ports_status_str = get_device_info_json(nm, host)
+        print(Fore.YELLOW + "[nmap]" + Fore.WHITE + f" Found device: " + Fore.CYAN + f"{host} | " + Fore.WHITE + f"Ports: [{ports_status_str}" + Fore.WHITE + "]")
 
         # Check if the device is already in the database
         cursor.execute("SELECT device_info FROM scans WHERE ip = %s", (host,))
@@ -136,6 +136,8 @@ def get_device_info_json(nm, host):
         'ports': []
     }
 
+    ports_status = []
+
     for proto in nm[host].all_protocols():
         port_list = nm[host][proto].keys()
         for port in port_list:
@@ -148,7 +150,15 @@ def get_device_info_json(nm, host):
             }
             device_info['ports'].append(port_info)
 
-    return json.dumps(device_info)
+            if port_info['state'] == 'open':
+                ports_status.append(Fore.GREEN + str(port))
+            elif port_info['state'] == 'filtered':
+                ports_status.append(Fore.YELLOW + str(port))
+            elif port_info['state'] == 'closed':
+                ports_status.append(Fore.RED + str(port))
+    ports_status_str = ','.join(ports_status)
+
+    return json.dumps(device_info), ports_status_str
 
 def update_device_info(cursor, status, device_info_json, host, existing_info):
     """Updates existing device information in the database."""
@@ -262,7 +272,7 @@ if __name__ == "__main__":
                             print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
                         time.sleep(wait_time)  # Wait for the specified interval before the next scan
                 except KeyboardInterrupt:
-                    print("\nScan interrupted by user. Exiting...")
+                    print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
                     terminate_api()  # Terminate the API process if running
             else:
                 print(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1 or 2.")
