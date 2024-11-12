@@ -105,6 +105,20 @@ Response in `Json` format:
 ],
 ```
 
+---
+Tests:
+```
+(venv) PS E:\~Repo\NetworkMonitor> pytest
+================================================== test session starts ==================================================
+platform win32 -- Python 3.11.3, pytest-8.3.3, pluggy-1.5.0
+rootdir: E:\~Repo\NetworkMonitor
+collected 5 items                                                                                                        
+
+test_nm.py .....                                                                                                   [100%]
+
+================================================== 5 passed in 10.06s ===================================================
+```
+
 |                                                links                                                                         |                                 description                                         |
 |:----------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------:|
 |[![Static Badge](https://img.shields.io/badge/Discord-from__russia__with__love-purple)](https://about:blank)                  |                                My Discord tag                                       |
