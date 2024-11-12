@@ -3,3 +3,4 @@ PyMySQL
 flask
 cryptography
 colorama
+pytest
