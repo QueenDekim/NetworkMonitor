@@ -38,4 +38,4 @@ def test_database_connection_closes():
         mock_connection.close.assert_called_once()
 
 def test_scan_network():
-    assert network_monitor.scan_network("127.0.0.1/24","22,80,443") is not None
+    assert network_monitor.scan_network("127.0.0.1","22,80,443") is not None
