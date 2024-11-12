@@ -71,22 +71,30 @@ Default Scan Interval (minutes, default: 1): 1
 ```
 
 In the `Scan`, specify the scan parameters (if you press `Enter` without specifying the data, the default value will be used):
+
+*To scan multiple subnets at once, specify them separated by a space (192.168.1.0/24 192.168.2.0/24 192.168.3.0/24 ... 192.168.x.0/24)*
 ```log
 [API] REST API started at http://0.0.0.0:5000/api/scans
-Enter the network to scan (default: 192.168.1.0/24): 10.10.123.0/24
+Enter the network to scan (default: 10.10.123.0/24): 10.10.123.0/24 10.11.123.0/24
 Enter the ports to scan (default: 22,80,443):
-Scan interval (minutes)  (default: 1):
-[nmap] Starting scan on network 10.10.123.0/24 with ports 22,80,443...
+Scan interval (minutes)  (default: 1.0):
+[nmap] Starting scan on network 10.10.123.0/24 10.11.123.0/24 with ports 22,80,443...
 [nmap] Scan completed.
 [db] Database connection established.
-[nmap] Found device: 10.10.123.1
+[nmap] Found device: 10.10.123.1 | Ports: [22,80,443]
 [db] Updated information about 10.10.123.1
-[nmap] Found device: 10.10.123.7
+[nmap] Found device: 10.10.123.7 | Ports: [22,80,443]
 [db] Updated information about 10.10.123.7
-[nmap] Found device: 10.10.123.8
+[nmap] Found device: 10.10.123.8 | Ports: [22,80,443]
 [db] Updated information about 10.10.123.8
-[nmap] Found device: 10.10.123.9
+[nmap] Found device: 10.10.123.9 | Ports: [22,80,443]
 [db] Updated information about 10.10.123.9
+[nmap] Found device: 10.11.123.1 | Ports: [22,80,443]
+[db] Inserted information about 10.11.123.1
+[nmap] Found device: 10.11.123.10 | Ports: [22,80,443]
+[db] Inserted information about 10.11.123.10
+[nmap] Found device: 10.11.123.2 | Ports: [22,80,443]
+[db] Inserted information about 10.11.123.2
 [db] Database updated successfully.
 [db] Connection closed.
 [Info] Waiting for 1.0 minutes before next scan...
