@@ -2,11 +2,13 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits)
 ![GitHub Repo stars](https://img.shields.io/github/stars/QueenDekim/NetworkMonitor)
 
-# NetworkMonitor(nmap) + RestAPI(flusk)
+# NetworkMonitor(nmap) + RestAPI(flask)
 
 ```shell
 git clone https://github.com/QueenDekim/NetworkMonitor.git
 cd ./NetworkMonitor
+python -m venv venv
+.\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -15,56 +17,90 @@ Install `mysql` and execute the command from the `base.sql` file in it
 Install `nmap`:
  - Windows - [installer (exe)](https://nmap.org/dist/nmap-7.95-setup.exe)
  - Ubuntu - `sudo apt install nmap`
+ - Other OS - [link](https://nmap.org/book/inst-other-platforms.html)
 
-In the `.py` files change the login details in `MySQL`:
+~~In the `config.py` file change the login details in `MySQL` and flask configuration~~ **[DEPRECATED]**:
 ```py
-conn = mysql.connector.connect(
-    host='localhost',
-    user='username',
-    password='password',
-    database='network_monitoring'
-)
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'user',
+    'password': 'password',
+    'database': 'network_monitoring'
+}
+
+VENV = {
+    'PATH': '.\\venv',
+}
+
+FLASK_CONFIG = {
+    'HOST': '0.0.0.0',
+    'PORT': 5000,
+    'DEBUG': True
+}
+
+SCAN_CONFIG = {
+    "DEFAULT_NETWORK": "192.168.1.0/24",
+    "DEFAULT_PORTS": "22,80,443",
+    "DEFAULT_INTERVAL": 1.0
+}
 ```
 
-in the `rest_api.py` file we configure `Flusk`, or leave it as is:
-```py
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5150)
+Run `network_monitor.py` and select Configure or Scan
+```
+Choose an option:
+1. Configure
+2. Scan
+Enter your choice:
 ```
 
-first run `network_monitor.py` and specify the network and ports to scan
-For example:
-```shell
-Enter the network to scan (e.g., 192.168.1.0/24): 192.168.0.0/24
-Enter the ports to scan (e.g., 22,80,443): 21
-Starting scan on network 192.168.0.0/24 with ports 21...
-Scan completed.
-Found device: 192.168.0.1
-Found device: 192.168.0.100
-Found device: 192.168.0.101
-Found device: 192.168.0.102
-Found device: 192.168.0.103
-Found device: 192.168.0.104
-Found device: 192.168.0.106
-Found device: 192.168.0.107
-Found device: 192.168.0.128
-Found device: 192.168.0.129
-Found device: 192.168.0.140
-Waiting for 2 minutes before next scan...
+In `Configure`, you can enter data for logging into the database, Flask parameters (API), and standard values for the fields for entering scan parameters (if you press `Enter` without specifying the data, the default value will be used):
+```log
+[Config] Configure your settings:
+Database Host (default: localhost):
+Database User (default: root): user
+Database Password (default: password):
+Database Name (default: network_monitoring):
+Virtual Environment Path (default: .\venv):
+Flask Host (default: 0.0.0.0):
+Flask Port (default: 5000):
+Flask Debug (default: True):
+Default Network to Scan (default: 192.168.1.0/24): 10.10.123.0/24
+Default Ports to Scan (default: 22,80,443): 22,80,443
+Default Scan Interval (minutes, default: 1): 1
+[Config] Configuration saved to config.py.
 ```
-Then run `rest_api.py`
 
-after information about the found devices appears in the `network_monitor.py` console, try making a `GET` request to `<your ip>:<port(default 5150)>/api/scans`
+In the `Scan`, specify the scan parameters (if you press `Enter` without specifying the data, the default value will be used):
 
-We receive the response in `Json` format:
+*To scan multiple subnets at once, specify them separated by a space (192.168.1.0/24 192.168.2.0/24 192.168.3.0/24 ... 192.168.x.0/24)*
+
+![demo](https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/log.png)
+
+After information about the found devices appears, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
+
+Response in `Json` format:
 ```json
-{
-    "device_info": "{\"ports\": [{\"name\": \"ftp\", \"port\": 21, \"state\": \"filtered\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
-    "id": 1,
-    "ip": "192.168.0.1",
-    "status": "up",
-    "timestamp": "Mon, 14 Oct 2024 09:38:47 GMT"
-},
+[
+  1,
+  "10.10.123.1",
+  "up",
+  "{\"ports\": [{\"name\": \"ssh\", \"port\": 22, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"http\", \"port\": 80, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"https\", \"port\": 443, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
+  "Fri, 08 Nov 2024 07:07:50 GMT"
+],
+```
+
+---
+Tests:
+```
+(venv) PS E:\~Repo\NetworkMonitor> pytest
+================================================== test session starts ==================================================
+platform win32 -- Python 3.11.3, pytest-8.3.3, pluggy-1.5.0
+rootdir: E:\~Repo\NetworkMonitor
+collected 5 items                                                                                                        
+
+test_nm.py .....                                                                                                   [100%]
+
+================================================== 5 passed in 10.06s ===================================================
 ```
 
 |                                                links                                                                         |                                 description                                         |
