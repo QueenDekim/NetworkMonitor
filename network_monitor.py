@@ -142,7 +142,7 @@ def perform_scan(nm, network, ports):
     try:
         print(Fore.YELLOW + "[nmap]" + Fore.WHITE + f" Starting scan on network {Fore.GREEN}{network}{Fore.WHITE} with ports {Fore.GREEN}{ports}...")
         # Execute the scan with version detection, specified ports, and a fast timing template
-        nm.scan(hosts=network, arguments=f'-sV -p {ports} -T5', timeout=1200)
+        nm.scan(hosts=network, arguments=f'-sV -p {ports} -T5 --unprivileged', timeout=1200)
         print(Fore.YELLOW + "[nmap]" + Fore.WHITE + " Scan completed.")
         return True     # Return True to indicate the scan was successful
     except Exception as e:
