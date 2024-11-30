@@ -128,5 +128,6 @@ test_nm.py .....                                                                
 
 |                                                links                                                                         |                                 description                                         |
 |:----------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------:|
+|https://net.dekimdev.ru/                                                                                                      |                                     Demo                                            |
 |[![Static Badge](https://img.shields.io/badge/Discord-from__russia__with__love-purple)](https://about:blank)                  |                                My Discord tag                                       |
 |[![Static Badge](https://img.shields.io/badge/Telegram-%40QueenDek1m-blue)](https://t.me/QueenDek1m)                          |                                  My telegram                                        |
