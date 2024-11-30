@@ -40,9 +40,15 @@ class DatabaseConnection:
             self.cursor = self.connection.cursor()
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database connection established.")
             return self.cursor      # Return the cursor for use in the with statement
+        except pymysql.err.OperationalError as e:
+            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
+            return None  # Return None to indicate the connection failed
         except UnicodeEncodeError:
             # Handle the case where the password cannot be encoded
             print(Fore.RED + "[db]" + Fore.WHITE + " Error: unable to encode password")
+        except Exception as e:
+            print(Fore.RED + "[db]" + Fore.WHITE + f" An error occurred: {e}")
+            return None  # Return None to indicate the connection failed
 
     def __exit__(self, exc_type, exc_value, traceback):
         # Closes the database connection and cursor when exiting the context.
@@ -235,9 +241,10 @@ def update_device_info(cursor, status, device_info_json, host, existing_info, ad
         # Execute an SQL UPDATE statement to update the device's status and information in the database
         cursor.execute(
             "UPDATE scans SET status = %s, device_info = %s, timestamp = CURRENT_TIMESTAMP, domain = %s WHERE ip = %s",
-            (status, device_info_json, host, address)    # Parameters for the SQL query
+            (status, device_info_json, address, host)    # Parameters for the SQL query
         )
         print(Fore.YELLOW + "[db]" + Fore.WHITE + " Updated information about " + Fore.GREEN + f"{host}")
+        cursor.connection.commit()
 
 #-----------------#
 # Inserts new device information into the database.
@@ -248,6 +255,7 @@ def insert_device_info(cursor, status, device_info_json, host, address):
         (host, status, device_info_json, address)        # Parameters for the SQL query
     )
     print(Fore.YELLOW + "[db]" + Fore.WHITE + " Inserted information about " + Fore.GREEN + f"{host}")
+    cursor.connection.commit()
 
 #-----------------#
 # Updates the status of devices that were not found in the current scan.
