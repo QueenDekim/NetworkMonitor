@@ -74,7 +74,7 @@ In the `Scan`, specify the scan parameters (if you press `Enter` without specify
 
 *To scan multiple subnets at once, specify them separated by a space (192.168.1.0/24 192.168.2.0/24 192.168.3.0/24 ... 192.168.x.0/24)*
 
-![demo](https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/log.png)
+![demo](https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/image.png)
 
 After information about the found devices appears, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
 
