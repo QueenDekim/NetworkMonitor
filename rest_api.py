@@ -102,7 +102,7 @@ def index():
                 <h1>Welcome to the Network Monitor API</h1>
                 <p>This API allows you to monitor network scans and retrieve scan data.</p>
                 <h2>API Documentation</h2>
-                <p>For detailed API documentation, visit <a href="/apidocs">/api/scans</a>.</p>
+                <p>For detailed API documentation, visit <a href="/apidocs">/apidocs</a>.</p>
                 <h2>Available Endpoints</h2>
                 <ul>
                     <li><strong>GET /api/scans</strong> - Retrieve a list of all scans.</li>
