@@ -159,7 +159,10 @@ def perform_scan(nm, network, ports):
 #-----------------#
 # Processes scan results and updates the database with device information.
 def process_scan_results(nm, cursor):
-
+    if cursor is None:
+        print(Fore.RED + "[db]" + Fore.WHITE + " No database cursor available. Exiting process scan results.")
+        return  # Exit the function if cursor is None
+    
     # Initialize a set to keep track of found hosts
     found_hosts = set()
 
@@ -176,6 +179,7 @@ def process_scan_results(nm, cursor):
         except:
             address = "None"
             print(Fore.YELLOW + "[socket]" + Fore.WHITE + f"No domain name found on host {host}")
+        
         # Check if the device is already in the database
         cursor.execute("SELECT device_info FROM scans WHERE ip = %s", (host,))
         result = cursor.fetchone()
