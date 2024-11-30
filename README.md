@@ -110,7 +110,7 @@ Response example in `Json` format:
 ]
 ```
 
-- ### API documentation - `ip:port/apidocs`
+- ### API documentation - `<ip>:<port(default 5000>/apidocs`
 
 ---
 Tests:
