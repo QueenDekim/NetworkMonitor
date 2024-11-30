@@ -89,6 +89,8 @@ Response in `Json` format:
 ],
 ```
 
+api documentation - `ip:port/apidocs`
+
 ---
 Tests:
 ```
