@@ -78,7 +78,28 @@ In the `Scan`, specify the scan parameters (if you press `Enter` without specify
 
 After information about the found devices appears, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
 
-Response in `Json` format:
+Response example in `Json` format:
+```json
+[
+ [
+   1,
+   "10.10.123.1",
+   "up",
+   "{\"ports\": [{\"name\": \"ssh\", \"port\": 22, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"http\", \"port\": 80, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"https\", \"port\": 443, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
+   "Fri, 08 Nov 2024 07:07:50 GMT"
+ ],
+ [
+   2,
+   "10.10.123.2",
+   "up",
+   "{\"ports\": [{\"name\": \"ssh\", \"port\": 22, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"http\", \"port\": 80, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"https\", \"port\": 443, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
+   "Fri, 08 Nov 2024 07:07:51 GMT"
+ ]
+]
+```
+if you want to get information about a specific device, send a `GET` request to `<your ip>:<port(default 5000)>/api/scans/<device ip address>`
+
+Response example in `Json` format:
 ```json
 [
   1,
@@ -86,10 +107,10 @@ Response in `Json` format:
   "up",
   "{\"ports\": [{\"name\": \"ssh\", \"port\": 22, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"http\", \"port\": 80, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"https\", \"port\": 443, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
   "Fri, 08 Nov 2024 07:07:50 GMT"
-],
+]
 ```
 
-api documentation - `ip:port/apidocs`
+- ### API documentation - `ip:port/apidocs`
 
 ---
 Tests:
