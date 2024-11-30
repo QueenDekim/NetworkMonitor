@@ -72,7 +72,7 @@ def start_api():
         with open(os.devnull, 'w') as devnull:
             # Start the REST API as a subprocess, redirecting stdout and stderr to devnull
             process = subprocess.Popen([python_executable, 'rest_api.py'], stdout=devnull, stderr=devnull)
-            print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API started at " + Fore.CYAN + f"http://{FLASK_CONFIG['HOST']}:{FLASK_CONFIG['PORT']}/api/scans" + Fore.WHITE)
+            print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API started at " + Fore.CYAN + f"http://{FLASK_CONFIG['HOST']}:{FLASK_CONFIG['PORT']}" + Fore.WHITE)
         api_started = True      # Set the api_started flag to True indicating the API has started
         return 0
     except Exception as e:
