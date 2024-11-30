@@ -62,10 +62,53 @@ def index():
     <html>
         <head>
             <title>Network Monitor API</title>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/3.52.5/swagger-ui.css" />
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    background-color: #f8f9fa;
+                    margin: 0;
+                    padding: 20px;
+                }
+                h1 {
+                    color: #333;
+                }
+                h2 {
+                    color: #007bff;
+                }
+                p {
+                    color: #555;
+                    line-height: 1.5;
+                }
+                a {
+                    color: #007bff;
+                    text-decoration: none;
+                }
+                a:hover {
+                    text-decoration: underline;
+                }
+                .container {
+                    max-width: 800px;
+                    margin: auto;
+                    padding: 20px;
+                    background-color: white;
+                    border-radius: 5px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                }
+            </style>
         </head>
         <body>
-            <h1>Welcome to the Network Monitor API</h1>
-            <p>Use <a href="/api/scans">/api/scans</a> to get scan data.</p>
+            <div class="container">
+                <h1>Welcome to the Network Monitor API</h1>
+                <p>This API allows you to monitor network scans and retrieve scan data.</p>
+                <h2>API Documentation</h2>
+                <p>For detailed API documentation, visit <a href="/apidocs">/api/scans</a>.</p>
+                <h2>Available Endpoints</h2>
+                <ul>
+                    <li><strong>GET /api/scans</strong> - Retrieve a list of all scans.</li>
+                    <li><strong>GET /api/scans/&lt;ip&gt;</strong> - Retrieve scan data for a specific IP address.</li>
+                </ul>
+            </div>
         </body>
     </html>
     '''
