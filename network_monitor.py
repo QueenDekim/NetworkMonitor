@@ -181,8 +181,12 @@ def process_scan_results(nm, cursor):
             print(Fore.YELLOW + "[socket]" + Fore.WHITE + f"No domain name found on host {host}")
         
         # Check if the device is already in the database
-        cursor.execute("SELECT device_info FROM scans WHERE ip = %s", (host,))
-        result = cursor.fetchone()
+        try:
+            cursor.execute("SELECT device_info FROM scans WHERE ip = %s", (host,))
+            result = cursor.fetchone()
+        except Exception as e:
+            print(Fore.RED + "[db]" + Fore.WHITE + f" Error checking database for existing device: {e}")
+            return None
 
         # If the device exists in the database, update its information
         if result:
