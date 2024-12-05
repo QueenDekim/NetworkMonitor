@@ -7,6 +7,7 @@ DB_CONFIG = {
 
 VENV = {
     'PATH': '.\\venv',
+    "API_KEY":"c4c4253f276378d2fa5ec9b2b1f465c1"
 }
 
 FLASK_CONFIG = {
