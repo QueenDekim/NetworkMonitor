@@ -1,10 +1,11 @@
 #-----------------#
 # Imported modules
-from flask import Flask, jsonify, send_from_directory   # Import Flask framework and related functions for building web applications
+from flask import Flask, request, jsonify, send_from_directory   # Import Flask framework and related functions for building web applications
 import pymysql                                          # Import pymysql for connecting to and interacting with MySQL databases
-from config import DB_CONFIG, FLASK_CONFIG              # Import database and Flask configuration settings from the config module
+from config import DB_CONFIG, FLASK_CONFIG, VENV              # Import database and Flask configuration settings from the config module
 import os                                               # Import os for interacting with the operating system (e.g., file paths, environment variables)
 from flasgger import Swagger                            # Importing Swagger for API documentation
+import json
 
 app = Flask(__name__)   # Create an instance of the Flask application
 
@@ -16,14 +17,18 @@ app.config['SWAGGER'] = {
 
 swagger = Swagger(app)
 
+def connect_to_db():
+    # Connect to the MySQL database using the provided configuration settings
+    return pymysql.connect(
+        host=DB_CONFIG['host'],
+        user=DB_CONFIG['user'],
+        password=DB_CONFIG['password'],
+        database=DB_CONFIG['database']
+    )
+
 def get_scan_data():
     # Establish a connection to the MySQL database using configuration settings
-    conn = pymysql.connect(
-            host=DB_CONFIG['host'],             # Database host
-            user=DB_CONFIG['user'],             # Database user
-            password=DB_CONFIG['password'],     # Database password
-            database=DB_CONFIG['database']      # Database name
-        )
+    conn = connect_to_db()
     try:
         cursor = conn.cursor()      # Create a cursor object to interact with the database
         cursor.execute("SELECT * FROM scans ORDER BY id ASC")   # Execute a SQL query to retrieve all scan records ordered by id
@@ -37,12 +42,7 @@ def get_scan_data():
     
 def get_scan_data_by_ip(ip):
     # Function to retrieve scan data by IP address
-    conn = pymysql.connect(
-        host=DB_CONFIG['host'],
-        user=DB_CONFIG['user'],
-        password=DB_CONFIG['password'],
-        database=DB_CONFIG['database']
-    )
+    conn = connect_to_db()
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM scans WHERE ip = %s", (ip,))  # Use a parameterized query for security
@@ -55,6 +55,32 @@ def get_scan_data_by_ip(ip):
         cursor.close()
         conn.close()  # Close the database connection
 
+def update_or_create_scan(scan_data):
+    # Function for updating an existing record or creating a new one.
+    conn = connect_to_db()
+    try:
+        cursor = conn.cursor()
+        # Check if a record with the same IP already exists
+        cursor.execute("SELECT * FROM scans WHERE ip = %s", (scan_data[0][0],))
+        row = cursor.fetchone()
+
+        if row is not None:
+            # Update existing record
+            cursor.execute("UPDATE scans SET status = %s, device_info = %s, domain = %s WHERE ip = %s",
+                           (scan_data[0][1], json.dumps(scan_data[0][2]), scan_data[0][3], scan_data[0][0]))
+        else:
+            # Create a new record
+            cursor.execute("INSERT INTO scans (ip, status, device_info, domain) VALUES (%s, %s, %s, %s)",
+                           (scan_data[0][0], scan_data[0][1], json.dumps(scan_data[0][2]), scan_data[0][3]))
+
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        cursor.close()
+        conn.close()
 
 @app.route('/')     # Define the route for the root URL of the application
 def index():
@@ -198,6 +224,10 @@ def get_scans():
                       example: "Sat, 30 Nov 2024 12:29:20 GMT"
                     - type: string
                       example: "None"
+      404:
+        description: Not found
+      500:
+        description: Internal server error
     """
     data = get_scan_data()  # Call the function to retrieve scan data from the database
     # Return the scan data as a JSON response
@@ -247,6 +277,74 @@ def get_scan_by_ip(ip):
             return jsonify({"error": "Internal server error"}), 500
         else:  # If the record is not found
             return jsonify({"error": "Not found"}), 404
+
+@app.route('/api/scans', methods=['POST'])  # Определяем маршрут для POST-запроса
+def create_or_update_scan():
+    """
+    Create a new scan or update an existing one
+    ---
+    parameters:
+      - name: Authorization
+        in: header
+        type: string
+        required: true
+        description: API token for authorization
+      - name: scan_data
+        in: body
+        required: true
+        schema:
+          type: array
+          items:
+            type: array
+            items:
+                
+                oneOf:
+                    - type: string
+                      description: "Ip address"
+                      example: "192.168.0.1"
+                    - type: string
+                      description: "Device status"
+                      example: "up"
+                    - type: string
+                      description: "Ports information"
+                      example: '{"ports": [{"name": "ssh", "port": 22, "state": "open", "product": "OpenSSH", "version": "6.6.0"}, {"name": "http", "port": 80, "state": "open", "product": "TP-LINK router http config", "version": ""}, {"name": "https", "port": 443, "state": "open", "product": "", "version": ""}], "hostname": "TPLINK"}'
+                    - type: string
+                      description: "Domain name"
+                      example: "example.com"
+                
+    responses:
+      201:
+        description: Scan created or updated successfully
+      401:
+        description: Unauthorized
+      400:
+        description: Bad request
+      500:
+        description: Internal server error
+    """
+    # Проверка авторизации
+    auth_header = request.headers.get('Authorization')
+    if auth_header.__contains__("Bearer"):
+        auth_header = auth_header.split("Bearer ")[1]
+    print(f"Authorization header: {auth_header}")
+    if not auth_header:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    token = auth_header  # Извлекаем токен
+    if token != VENV['API_KEY']:  # Сравниваем с ключом из конфигурации
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # Получение данных из запроса
+    scan_data = request.json
+    print(f"Received scan_data: {scan_data}")
+    if not isinstance(scan_data, list) or not all(isinstance(item, list) for item in scan_data):
+        return jsonify({"error": "Bad request"}), 400
+
+    # Обновление или создание записи
+    if update_or_create_scan(scan_data):
+        return jsonify({"message": "Scan created or updated successfully"}), 201
+    else:
+        return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
     # Start the Flask application with the specified configuration settings
