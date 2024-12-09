@@ -10,6 +10,8 @@ import subprocess                                                   # Import sub
 import os                                                           # Import os for operating system dependent functionality
 import getpass                                                      # Import getpass for securely getting user passwords without echoing
 import socket
+import random
+import hashlib
 
 #-----------------#
 # Global variables to manage the API process state
@@ -355,6 +357,40 @@ def configure_settings():
     print(Fore.GREEN + "[Config]" + Fore.WHITE + " Configuration saved to config.py.")
 
 #-----------------#
+# Generate Api Key (MD5)
+def generate_api_key():
+    random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
+    api_key_string = f".netmonitor_{random_number}_config."  # Form the string for the key
+    api_key = hashlib.md5(api_key_string.encode()).hexdigest()  # Calculate the MD5 hash
+    print(Fore.GREEN + "[API Key]" + Fore.WHITE + " Generated API Key: " + Fore.CYAN + f"{api_key}" + Fore.WHITE)
+
+    # Load the existing config.py
+    config_data = {}
+    with open('config.py', 'r') as config_file:
+        exec(config_file.read(), config_data)  # Execute the code to get the variables
+
+    # Update API_KEY in VENV
+    config_data['VENV']["API_KEY"] = api_key
+
+    # Save the updated config back to config.py
+    with open('config.py', 'w') as config_file:
+        config_file.write("DB_CONFIG = ")
+        config_file.write(json.dumps(config_data["DB_CONFIG"], indent=4))  # Write DB_CONFIG
+        config_file.write("\n\n")
+        config_file.write("VENV = ")
+        config_file.write(json.dumps(config_data["VENV"], indent=4))  # Write VENV
+        config_file.write("\n\n")
+        config_file.write("FLASK_CONFIG = {\n")
+        config_file.write(f"    'HOST': '{config_data['FLASK_CONFIG']['HOST']}',\n")
+        config_file.write(f"    'PORT': {config_data['FLASK_CONFIG']['PORT']},\n")
+        config_file.write(f"    'DEBUG': {str(config_data['FLASK_CONFIG']['DEBUG']).capitalize()}\n")  # Write DEBUG correctly
+        config_file.write("}\n\n")
+        config_file.write("SCAN_CONFIG = ")
+        config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))  # Write SCAN_CONFIG
+
+    print(Fore.GREEN + "[Config]" + Fore.WHITE + " API Key saved to config.py.")
+
+#-----------------#
 # Main execution block to handle user input and initiate scanning or configuration.
 if __name__ == "__main__":
 
@@ -363,7 +399,7 @@ if __name__ == "__main__":
         # Infinite loop to continuously prompt the user for an action
         while True:
             # Get user input for choosing an option (configure or scan)
-            choice = get_user_input("Choose an option:\n1. Configure\n2. Scan\nEnter your choice: ", "2")
+            choice = get_user_input("Choose an option:\n" + Fore.GREEN + "1. " + Fore.WHITE + "Configure\n" + Fore.GREEN + "2. " + Fore.WHITE + "Scan\n" + Fore.GREEN + "3. " + Fore.WHITE + "Generate/Regenerate API Key\nEnter your choice: ", "2")
             if choice is None:
                 break                   # Exit the loop if no choice is made
             # If the user chooses to configure settings
@@ -391,6 +427,8 @@ if __name__ == "__main__":
                     # Handle the case where the scan is interrupted by the user
                     print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
                     terminate_api()                         # Terminate the API process if running
+            elif choice == "3":
+                generate_api_key()
             else:
                 # Handle invalid user input
                 print(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1 or 2.")
