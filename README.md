@@ -19,32 +19,6 @@ Install `nmap`:
  - Ubuntu - `sudo apt install nmap`
  - Other OS - [link](https://nmap.org/book/inst-other-platforms.html)
 
-~~In the `config.py` file change the login details in `MySQL` and flask configuration~~ **[DEPRECATED]**:
-```py
-DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'user',
-    'password': 'password',
-    'database': 'network_monitoring'
-}
-
-VENV = {
-    'PATH': '.\\venv',
-}
-
-FLASK_CONFIG = {
-    'HOST': '0.0.0.0',
-    'PORT': 5000,
-    'DEBUG': True
-}
-
-SCAN_CONFIG = {
-    "DEFAULT_NETWORK": "192.168.1.0/24",
-    "DEFAULT_PORTS": "22,80,443",
-    "DEFAULT_INTERVAL": 1.0
-}
-```
-
 Run `network_monitor.py` and select Configure or Scan
 ```
 Choose an option:
@@ -72,7 +46,7 @@ Default Scan Interval (minutes, default: 1): 1
 
 In the `Scan`, specify the scan parameters (if you press `Enter` without specifying the data, the default value will be used):
 
-*To scan multiple subnets at once, specify them separated by a space (192.168.1.0/24 192.168.2.0/24 192.168.3.0/24 ... 192.168.x.0/24)*
+*To scan multiple subnets at once, specify them separated by a space (192.168.1-8.0/24 10.10.1-120.0/24 5.16.8-63.0/24)*
 
 ![demo](https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/image.png)
 
