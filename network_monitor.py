@@ -8,6 +8,7 @@ from colorama import Fore                                           # Import For
 from config import DB_CONFIG, VENV, FLASK_CONFIG, SCAN_CONFIG       # Import configuration settings from the config module
 import subprocess                                                   # Import subprocess for executing shell commands
 import os                                                           # Import os for operating system dependent functionality
+import sys
 import getpass                                                      # Import getpass for securely getting user passwords without echoing
 import socket
 import random
@@ -69,7 +70,10 @@ def start_api():
 
     try:
         # Construct the path to the Python executable in the virtual environment
-        python_executable = os.path.join(VENV['PATH'], 'Scripts', 'python.exe')
+        if sys.platform.startswith('win'):
+            python_executable = os.path.join(VENV['PATH'], 'Scripts', 'python.exe')
+        else:
+            python_executable = os.path.join(VENV['PATH'], 'bin', 'python')
         
         # Open a null device to suppress output
         with open(os.devnull, 'w') as devnull:
