@@ -2,7 +2,69 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits)
 ![GitHub Repo stars](https://img.shields.io/github/stars/QueenDekim/NetworkMonitor)
 
-# NetworkMonitor(nmap) + RestAPI(flask, flasgger)
+# NetworkMonitor (nmap, socket) + RestAPI (flask, flasgger) + DB (MySQL)
+
+## 👉 [DockerHub repository](https://hub.docker.com/r/dekimasc/networkmonitor)
+
+## Installation in using `Docker`:
+
+- Installation in using `docker-compose`:<br>
+    Create a new file named `docker-compose.yml` with the following content:
+    ```yml
+    version: '3.8'
+
+    services:
+        app:
+            image: dekimasc/networkmonitor:latest
+            volumes:
+                - .:/app
+            depends_on:
+                - db
+            ports:
+                - "5000:5000"
+            environment:
+                NETWORK: 192.168.1.0/24
+                PORTS: 22,443,80
+                INTERVAL: 1.0
+                DB_HOST: db
+                DB_USER: root
+                DB_PASSWORD: mysecretpassword
+                DB_NAME: network_monitoring
+                FLASK_HOST: 0.0.0.0
+                FLASK_PORT: 5000
+                FLASK_DEBUG: True
+
+        db:
+            image: mysql:5.7
+            restart: always
+            environment:
+                MYSQL_ROOT_PASSWORD: mysecretpassword
+                MYSQL_DATABASE: network_monitoring
+            volumes:
+                - db_data:/var/lib/mysql
+                - ./base.sql:/docker-entrypoint-initdb.d/base.sql
+
+    volumes:
+        db_data:
+    ```
+    *Replace the values of `NETWORK`, `PORTS`, `INTERVAL`, etc. with yours*<br>
+    Run `docker-compose up -d` *(or `docker compose up -d` if you use `docker-compose-plugin` for `Docker CE`)* to start the containers.
+    
+- Using `docker run`<br>
+  You can use the following command to run the container:
+  - Run **MySQL** container:
+      ```
+      docker run -d --name network_monitor_db -e MYSQL_ROOT_PASSWORD=mysecretpassword -e MYSQL_DATABASE=network_monitoring -v db_data:/var/lib/mysql -v $(pwd)/base.sql:/docker-entrypoint-initdb.d/base.sql mysql:5.7
+      ```
+  - Run **app** container:
+      ```
+      docker run -d --name network_monitor_app --link mysql_db:db -p 5000:5000 -e NETWORK=192.168.1.0/24 -e PORTS=22,443,80 -e INTERVAL=1.0 -e DB_HOST=db -e DB_USER=root -e DB_PASSWORD=mysecretpassword -e DB_NAME=network_monitoring -e FLASK_HOST=0.0.0.0 -e FLASK_PORT=5000 -e FLASK_DEBUG=True dekimasc/networkmonitor:latest
+      ```
+
+      *Replace the values of `NETWORK`, `PORTS`, `INTERVAL`, etc. with yours*
+---
+
+## Installation in local machine
 
 ```shell
 git clone https://github.com/QueenDekim/NetworkMonitor.git
@@ -83,6 +145,8 @@ Response example in `Json` format:
   "Fri, 08 Nov 2024 07:07:50 GMT"
 ]
 ```
+
+---
 
 - ### API documentation - `<ip>:<port(default 5000>/apidocs`
 
