@@ -13,6 +13,8 @@ RUN python -m venv venv
 
 RUN . venv/bin/activate && pip install --no-cache-dir -r requirements.txt
 
+EXPOSE 5000
+
 COPY . .
 
 ENV NETWORK="192.168.1.0/24"
