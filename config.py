@@ -2,7 +2,7 @@ DB_CONFIG = {
     "host": "db",
     "user": "root",
     "password": "mysecretpasword",
-    "database": "network_monitor"
+    "database": "network_monitoring"
 }
 
 VENV = {
