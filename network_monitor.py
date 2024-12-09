@@ -292,7 +292,7 @@ def update_device_status(cursor, found_hosts):
 #-----------------#
 # Configures database and other settings based on user input.
 def configure_settings(db_host=None, db_user=None, db_password=None, db_name=None, venv_path=None, flask_host=None, flask_port=None, flask_debug=None, default_network=None, default_ports=None, default_interval=None):
-    print(Fore.YELLOW + "[Config]" + Fore.WHITE + " Configure your settings:")
+    
 
     random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
     api_key_string = f".netmonitor_{random_number}_config."  # Form the string for the key
@@ -300,6 +300,7 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
 
     # If the parameters are not passed, request from the user
     if db_host is None:
+        print(Fore.YELLOW + "[Config]" + Fore.WHITE + " Configure your settings:")
         db_host = get_user_input(f"Database Host (default: {DB_CONFIG['host']}): ", f"{DB_CONFIG['host']}")
     if db_user is None:
         db_user = get_user_input(f"Database User (default: {DB_CONFIG['user']}): ", f"{DB_CONFIG['user']}")
@@ -318,8 +319,8 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         flask_debug = flask_debug_input.lower() in ['true', '1', 'yes']
         
     # Prompt for default scan values
-    print(Fore.GREEN + "Default values: " + Fore.WHITE)
     if default_network is None:
+        print(Fore.GREEN + "Default values: " + Fore.WHITE)
         default_network = get_user_input(f"Default Network to Scan (default: {SCAN_CONFIG['DEFAULT_NETWORK']}): ", f"{SCAN_CONFIG['DEFAULT_NETWORK']}")
     if default_ports is None:
         default_ports = get_user_input(f"Default Ports to Scan (default: {SCAN_CONFIG['DEFAULT_PORTS']}): ", f"{SCAN_CONFIG['DEFAULT_PORTS']}")
@@ -364,6 +365,8 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))     # Write SCAN_CONFIG section
 
     print(Fore.GREEN + "[Config]" + Fore.WHITE + " Configuration saved to config.py.")
+    print(Fore.GREEN + "[API]" + Fore.WHITE + " API available at http://" + flask_host + ":" + str(flask_port) + "/")
+    print(Fore.GREEN + "[Config]" + Fore.WHITE + " Yor API key is: " + Fore.YELLOW + api_key + Fore.WHITE)
 
 #-----------------#
 # Generate Api Key (MD5)
