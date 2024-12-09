@@ -12,6 +12,7 @@ import getpass                                                      # Import get
 import socket
 import random
 import hashlib
+import argparse
 
 #-----------------#
 # Global variables to manage the API process state
@@ -286,37 +287,40 @@ def update_device_status(cursor, found_hosts):
 
 #-----------------#
 # Configures database and other settings based on user input.
-def configure_settings():
+def configure_settings(db_host=None, db_user=None, db_password=None, db_name=None, venv_path=None, flask_host=None, flask_port=None, flask_debug=None, default_network=None, default_ports=None, default_interval=None):
     print(Fore.YELLOW + "[Config]" + Fore.WHITE + " Configure your settings:")
 
-    # Prompt for database parameters
-    print(Fore.GREEN + "Database parameters: " + Fore.WHITE)
-    db_host = get_user_input(f"Database Host (default: {DB_CONFIG['host']}): ", f"{DB_CONFIG['host']}")
-    db_user = get_user_input(f"Database User (default: {DB_CONFIG['user']}): ", f"{DB_CONFIG['user']}")
-    
-    # Prompt for database password, using a secure input method
-    db_password = getpass.getpass("Database Password (default: password): ") or "password"    
-    db_password_bytes = db_password.encode('utf-8')                     # Encode the password to bytes
-    db_password = db_password_bytes.decode('utf-8')                     # Decode back to string
+    random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
+    api_key_string = f".netmonitor_{random_number}_config."  # Form the string for the key
+    api_key = hashlib.md5(api_key_string.encode()).hexdigest()  # Calculate the MD5 hash
 
-    db_name = get_user_input(f"Database Name (default: {DB_CONFIG['database']}): ", f"{DB_CONFIG['database']}")
-    
-    # Prompt for environment parameters
-    print(Fore.GREEN + "Env parameters: " + Fore.WHITE)
-    venv_path = get_user_input(f"Virtual Environment Path (default: {VENV['PATH']}): ", f"{VENV['PATH']}")
-    
-    # Prompt for Flask parameters
-    print(Fore.GREEN + "Flask parameters: " + Fore.WHITE)
-    flask_host = get_user_input(f"Flask Host (default: {FLASK_CONFIG['HOST']}): ", f"{FLASK_CONFIG['HOST']}")
-    flask_port = int(get_user_input(f"Flask Port (default: {FLASK_CONFIG['PORT']}): ", f"{FLASK_CONFIG['PORT']}"))
-    flask_debug_input = get_user_input(f"Flask Debug (default: {FLASK_CONFIG['DEBUG']}): ", f"{FLASK_CONFIG['DEBUG']}")
-    flask_debug = flask_debug_input.lower() in ['true', '1', 'yes']     # Convert input to boolean
-    
+    # If the parameters are not passed, request from the user
+    if db_host is None:
+        db_host = get_user_input(f"Database Host (default: {DB_CONFIG['host']}): ", f"{DB_CONFIG['host']}")
+    if db_user is None:
+        db_user = get_user_input(f"Database User (default: {DB_CONFIG['user']}): ", f"{DB_CONFIG['user']}")
+    if db_password is None:
+        db_password = getpass.getpass("Database Password (default: password): ") or "password"
+    if db_name is None:
+        db_name = get_user_input(f"Database Name (default: {DB_CONFIG['database']}): ", f"{DB_CONFIG['database']}")
+    if venv_path is None:
+        venv_path = get_user_input(f"Virtual Environment Path (default: {VENV['PATH']}): ", f"{VENV['PATH']}")
+    if flask_host is None:
+        flask_host = get_user_input(f"Flask Host (default: {FLASK_CONFIG['HOST']}): ", f"{FLASK_CONFIG['HOST']}")
+    if flask_port is None:
+        flask_port = int(get_user_input(f"Flask Port (default: {FLASK_CONFIG['PORT']}): ", f"{FLASK_CONFIG['PORT']}"))
+    if flask_debug is None:
+        flask_debug_input = get_user_input(f"Flask Debug (default: {FLASK_CONFIG['DEBUG']}): ", f"{FLASK_CONFIG['DEBUG']}")
+        flask_debug = flask_debug_input.lower() in ['true', '1', 'yes']
+        
     # Prompt for default scan values
     print(Fore.GREEN + "Default values: " + Fore.WHITE)
-    default_network = get_user_input(f"Default Network to Scan (default: {SCAN_CONFIG['DEFAULT_NETWORK']}): ", f"{SCAN_CONFIG['DEFAULT_NETWORK']}")
-    default_ports = get_user_input(f"Default Ports to Scan (default: {SCAN_CONFIG['DEFAULT_PORTS']}): ", f"{SCAN_CONFIG['DEFAULT_PORTS']}")
-    default_interval = float(get_user_input(f"Default Scan Interval (minutes, default: {SCAN_CONFIG['DEFAULT_INTERVAL']}): ", f"{SCAN_CONFIG['DEFAULT_INTERVAL']}"))
+    if default_network is None:
+        default_network = get_user_input(f"Default Network to Scan (default: {SCAN_CONFIG['DEFAULT_NETWORK']}): ", f"{SCAN_CONFIG['DEFAULT_NETWORK']}")
+    if default_ports is None:
+        default_ports = get_user_input(f"Default Ports to Scan (default: {SCAN_CONFIG['DEFAULT_PORTS']}): ", f"{SCAN_CONFIG['DEFAULT_PORTS']}")
+    if default_interval is None:
+        default_interval = float(get_user_input(f"Default Scan Interval (minutes, default: {SCAN_CONFIG['DEFAULT_INTERVAL']}): ", f"{SCAN_CONFIG['DEFAULT_INTERVAL']}"))
 
     # Compile all configuration data into a dictionary
     config_data = {
@@ -327,7 +331,8 @@ def configure_settings():
             "database": db_name
         },
         "VENV": {
-            "PATH": venv_path
+            "PATH": venv_path,
+            "API_KEY": api_key
         },
         "FLASK_CONFIG": {
             "HOST": flask_host,
@@ -393,48 +398,91 @@ def generate_api_key():
 #-----------------#
 # Main execution block to handle user input and initiate scanning or configuration.
 if __name__ == "__main__":
+    # Creating a Command Line Argument parser
+    parser = argparse.ArgumentParser(description='Network Monitor')
+    parser.add_argument('--network', type=str, help='Network to scan')
+    parser.add_argument('--ports', type=str, help='Ports to scan')
+    parser.add_argument('--interval', type=float, help='Scan interval in minutes')
 
-    # Start of the main program execution
-    try:
-        # Infinite loop to continuously prompt the user for an action
-        while True:
-            # Get user input for choosing an option (configure or scan)
-            choice = get_user_input("Choose an option:\n" + Fore.GREEN + "1. " + Fore.WHITE + "Configure\n" + Fore.GREEN + "2. " + Fore.WHITE + "Scan\n" + Fore.GREEN + "3. " + Fore.WHITE + "Generate/Regenerate API Key\nEnter your choice: ", "2")
-            if choice is None:
-                break                   # Exit the loop if no choice is made
-            # If the user chooses to configure settings
-            if choice == "1":
-                configure_settings()
-            # If the user chooses to start scanning
-            elif choice == "2":
-                start_api()             # Start the API
-                # Get network details from the user with default values
-                network = get_user_input("Enter the network to scan " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_NETWORK']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_NETWORK']}")
-                ports = get_user_input("Enter the ports to scan " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_PORTS']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_PORTS']}")
-                interval = float(get_user_input("Scan interval (minutes)  " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_INTERVAL']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_INTERVAL']}"))
+    # Configuration args
+    parser.add_argument('--db_host', type=str, help='Database Host')
+    parser.add_argument('--db_user', type=str, help='Database User')
+    parser.add_argument('--db_password', type=str, help='Database Password')
+    parser.add_argument('--db_name', type=str, help='Database Name')
+    parser.add_argument('--venv_path', type=str, help='Virtual Environment Path')
+    parser.add_argument('--flask_host', type=str, help='Flask Host')
+    parser.add_argument('--flask_port', type=int, help='Flask Port')
+    parser.add_argument('--flask_debug', type=bool, help='Flask Debug (True/False)')
+    parser.add_argument('--default_network', type=str, help='Default Network')
+    parser.add_argument('--default_ports', type=str, help='Default ports')
+    parser.add_argument('--default_interval', type=float, help='Default interval')
 
-                try:
-                    # Infinite loop to perform scanning at specified intervals
-                    while True:
-                        scan_network(network, ports)        # Perform the network scan
-                        wait_time = float(interval) * 60    # Calculate wait time in seconds
-                        if interval < 1:
-                            print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
-                        else:
-                            print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
-                        time.sleep(wait_time)               # Wait for the specified interval before the next scan
-                except KeyboardInterrupt:
-                    # Handle the case where the scan is interrupted by the user
-                    print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
-                    terminate_api()                         # Terminate the API process if running
-            elif choice == "3":
-                generate_api_key()
-            else:
-                # Handle invalid user input
-                print(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1 or 2.")
-    except KeyboardInterrupt:
-        # Handle the case where the program is interrupted by the user
-        print("\nProgram interrupted by user. Exiting...")
-    finally:
-        # Ensure the API process is terminated when exiting the program
-        terminate_api()                                     # Terminate the API process if running
+    # Parsing arguments
+    args = parser.parse_args()
+
+    # If the parameters are set, run the scan
+    if args.network and args.ports and args.interval:
+        print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting scan with provided parameters...")
+        start_api()  # Launching the API
+        try:
+            while True:
+                scan_network(args.network, args.ports)  # Performing a network scan
+                wait_time = args.interval * 60  # We calculate the waiting time in seconds
+                print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {args.interval} minutes before next scan...")
+                time.sleep(wait_time)  # Waiting for the specified time before the next scan
+        except KeyboardInterrupt:
+            print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
+            terminate_api()  # Completing the API process if it is running
+    elif args.db_host or args.db_user or args.db_password or args.db_name or args.venv_path or args.flask_host or args.flask_port or args.flask_debug:
+        print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting configuration with provided parameters...")
+        try:
+            configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval)
+            exit(0)
+        except Exception as e:
+            print(Fore.RED + "[Error]" + Fore.WHITE + f" An error occurred during configuration")
+            exit(1)
+    else:
+        # Start of the main program execution
+        try:
+            # Infinite loop to continuously prompt the user for an action
+            while True:
+                # Get user input for choosing an option (configure or scan)
+                choice = get_user_input("Choose an option:\n" + Fore.GREEN + "1. " + Fore.WHITE + "Configure\n" + Fore.GREEN + "2. " + Fore.WHITE + "Scan\n" + Fore.GREEN + "3. " + Fore.WHITE + "Generate/Regenerate API Key\nEnter your choice: ", "2")
+                if choice is None:
+                    break                   # Exit the loop if no choice is made
+                # If the user chooses to configure settings
+                if choice == "1":
+                    configure_settings()
+                # If the user chooses to start scanning
+                elif choice == "2":
+                    start_api()             # Start the API
+                    # Get network details from the user with default values
+                    network = get_user_input("Enter the network to scan " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_NETWORK']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_NETWORK']}")
+                    ports = get_user_input("Enter the ports to scan " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_PORTS']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_PORTS']}")
+                    interval = float(get_user_input("Scan interval (minutes)  " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_INTERVAL']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_INTERVAL']}"))
+
+                    try:
+                        # Infinite loop to perform scanning at specified intervals
+                        while True:
+                            scan_network(network, ports)        # Perform the network scan
+                            wait_time = float(interval) * 60    # Calculate wait time in seconds
+                            if interval < 1:
+                                print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
+                            else:
+                                print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
+                            time.sleep(wait_time)               # Wait for the specified interval before the next scan
+                    except KeyboardInterrupt:
+                        # Handle the case where the scan is interrupted by the user
+                        print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
+                        terminate_api()                         # Terminate the API process if running
+                elif choice == "3":
+                    generate_api_key()
+                else:
+                    # Handle invalid user input
+                    print(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1 or 2.")
+        except KeyboardInterrupt:
+            # Handle the case where the program is interrupted by the user
+            print("\nProgram interrupted by user. Exiting...")
+        finally:
+            # Ensure the API process is terminated when exiting the program
+            terminate_api()                                     # Terminate the API process if running

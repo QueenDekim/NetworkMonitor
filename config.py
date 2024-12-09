@@ -1,20 +1,16 @@
 DB_CONFIG = {
-    'host': 'localhost',
-    'user': 'user',
-    'password': 'password',
-    'database': 'network_monitoring'
+    "host": "db",
+    "user": "root",
+    "password": "mysecretpasword",
+    "database": "network_monitor"
 }
 
 VENV = {
-    'PATH': '.\\venv',
-    "API_KEY":"c4c4253f276378d2fa5ec9b2b1f465c1"
+    "PATH": ".\\venv",
+    "API_KEY": ""
 }
 
-FLASK_CONFIG = {
-    'HOST': '0.0.0.0',
-    'PORT': 5000,
-    'DEBUG': True
-}
+FLASK_CONFIG = {'HOST': '0.0.0.0', 'PORT': 5000, 'DEBUG': True}
 
 SCAN_CONFIG = {
     "DEFAULT_NETWORK": "192.168.1.0/24",
