@@ -8,6 +8,8 @@ services:
       - .:/app
     depends_on:
       - db
+    ports:
+      - "5000:5000"
     environment:
       NETWORK: 192.168.1.0/24
       PORTS: 22,443,80
