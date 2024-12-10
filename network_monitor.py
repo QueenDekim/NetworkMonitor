@@ -31,28 +31,29 @@ class DatabaseConnection:
 
     def __enter__(self):
         # Establishes a database connection and returns the cursor for executing queries.
-        try:
-            # Create a new database connection using pymysql
-            self.connection = pymysql.connect(
-                host=DB_CONFIG['host'],
-                user=DB_CONFIG['user'],
-                password=DB_CONFIG['password'],
-                database=DB_CONFIG['database'],
-                charset='utf8mb4'
-            )
-            # Create a cursor object to interact with the database
-            self.cursor = self.connection.cursor()
-            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database connection established.")
-            return self.cursor      # Return the cursor for use in the with statement
-        except pymysql.err.OperationalError as e:
-            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
-            return None  # Return None to indicate the connection failed
-        except UnicodeEncodeError:
-            # Handle the case where the password cannot be encoded
-            print(Fore.RED + "[db]" + Fore.WHITE + " Error: unable to encode password")
-        except Exception as e:
-            print(Fore.RED + "[db]" + Fore.WHITE + f" An error occurred: {e}")
-            return None  # Return None to indicate the connection failed
+        while True:
+            try:
+                # Create a new database connection using pymysql
+                self.connection = pymysql.connect(
+                    host=DB_CONFIG['host'],
+                    user=DB_CONFIG['user'],
+                    password=DB_CONFIG['password'],
+                    database=DB_CONFIG['database'],
+                    charset='utf8mb4'
+                )
+                # Create a cursor object to interact with the database
+                self.cursor = self.connection.cursor()
+                print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database connection established.")
+                return self.cursor      # Return the cursor for use in the with statement
+            except pymysql.err.OperationalError as e:
+                print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
+                return None  # Return None to indicate the connection failed
+            except UnicodeEncodeError:
+                # Handle the case where the password cannot be encoded
+                print(Fore.RED + "[db]" + Fore.WHITE + " Error: unable to encode password")
+            except Exception as e:
+                print(Fore.RED + "[db]" + Fore.WHITE + f" An error occurred: {e}")
+                return None  # Return None to indicate the connection failed
 
     def __exit__(self, exc_type, exc_value, traceback):
         # Closes the database connection and cursor when exiting the context.
