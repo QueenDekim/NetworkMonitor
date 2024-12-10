@@ -44,7 +44,8 @@ class DatabaseConnection:
                 # Create a cursor object to interact with the database
                 self.cursor = self.connection.cursor()
                 print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database connection established.")
-                return self.cursor      # Return the cursor for use in the with statement
+                if self.cursor:
+                    return self.cursor      # Return the cursor for use in the with statement
             except pymysql.err.OperationalError as e:
                 print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
                 return None  # Return None to indicate the connection failed
