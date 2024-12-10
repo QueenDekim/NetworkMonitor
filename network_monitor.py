@@ -112,6 +112,8 @@ def initialize_database(cursor):
             print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Table 'scans' exist")
     except Exception as e:
         print(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
+    finally:
+        cursor.close()
 
 #-----------------#
 # Starts the REST API as a subprocess.
@@ -496,8 +498,25 @@ if __name__ == "__main__":
         start_api()  # Launching the API
         try:
             # Use a database connection to initialize the database and table
-            with DatabaseConnection() as cursor:
-                initialize_database(cursor)  # Initialize the database and table
+            while True:
+                try:
+                    connection = pymysql.connect(host=DB_CONFIG['host'],
+                        user=DB_CONFIG['user'],
+                        password=DB_CONFIG['password'],
+                        database=DB_CONFIG['database'],
+                        charset='utf8mb4'
+                    )
+                    print(Fore.GREEN + "[db]" + Fore.WHITE + " Connected to MySQL.")
+
+                    initialize_database(connection)  # Initialize the database and table
+                    break
+                except pymysql.err.OperationalError as e:
+                    print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
+                finally:
+                    if connection:
+                        connection.close()
+                        break
+            
             while True:
 
                 scan_network(args.network, args.ports)  # Performing a network scan
