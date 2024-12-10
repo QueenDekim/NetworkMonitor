@@ -1,8 +1,14 @@
-<div style="text-align:center"><img src="https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/docker-preview.png" /></div>
+<p align="center" width="100%">
+    <img height="520px" src="https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/docker-preview.png">
+</p>
 
-<div style="text-align:center"><img src="https://img.shields.io/github/languages/top/QueenDekim/NetworkMonitor" /><img src="https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits" /><img src="https://img.shields.io/github/stars/QueenDekim/NetworkMonitor" /></div>
+<p align="center" width="100%">
+    <img height="25px" src="https://img.shields.io/github/languages/top/QueenDekim/NetworkMonitor"> 
+    <img height="25px" src="https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits"> 
+    <img height="25px" src="https://img.shields.io/github/stars/QueenDekim/NetworkMonitor"> 
+</p>
 
-
+---
 
 # NetworkMonitor (nmap, socket)<br>RestAPI (flask, flasgger)<br>DB (MySQL)
 
