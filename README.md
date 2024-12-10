@@ -1,6 +1,12 @@
+<div style="text-align:center">
+
+<img src="https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/docker-preview.png" />
+
 ![GitHub top language](https://img.shields.io/github/languages/top/QueenDekim/NetworkMonitor)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits)
 ![GitHub Repo stars](https://img.shields.io/github/stars/QueenDekim/NetworkMonitor)
+
+</div>
 
 # NetworkMonitor (nmap, socket)<br>RestAPI (flask, flasgger)<br>DB (MySQL)
 
@@ -110,7 +116,7 @@ In the `Scan`, specify the scan parameters (if you press `Enter` without specify
 
 *To scan multiple subnets at once, specify them separated by a space (192.168.1-8.0/24 10.10.1-120.0/24 5.16.8-63.0/24)*
 
-![demo](https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/image.png)
+![demo](https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/log.png)
 
 After information about the found devices appears, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
 
