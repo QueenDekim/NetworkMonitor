@@ -88,32 +88,42 @@ def initialize_database(cursor):
             print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Database 'network_monitoring' exist")
         
         # Switch to the network_monitoring database
-        cursor.execute("USE network_monitoring")
+        try:
+            cursor.execute("USE network_monitoring")
+        except Exception as e:
+            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+
         
         print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database table...")
         # Check if the scans table exists
-        cursor.execute("SHOW TABLES LIKE 'scans'")
-        result = cursor.fetchone()
-        
-        if not result:
-            # Create the scans table if it does not exist
-            cursor.execute("""
-                CREATE TABLE scans (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    ip VARCHAR(15),
-                    status VARCHAR(10),
-                    device_info JSON,
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-                    domain VARCHAR(100) DEFAULT 'None'
-                )
-            """)
-            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
-        else: 
-            print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Table 'scans' exist")
+        try:
+            cursor.execute("SHOW TABLES LIKE 'scans'")
+            result = cursor.fetchone()
+            
+            if not result:
+                # Create the scans table if it does not exist
+                cursor.execute("""
+                    CREATE TABLE scans (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        ip VARCHAR(15),
+                        status VARCHAR(10),
+                        device_info JSON,
+                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+                        domain VARCHAR(100) DEFAULT 'None'
+                    )
+                """)
+                print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
+            else: 
+                print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Table 'scans' exist")
+        except Exception as e:
+            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
     except Exception as e:
         print(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
     finally:
-        cursor.close()
+        try:
+            cursor.close()
+        except Exception as e:
+            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
 
 #-----------------#
 # Starts the REST API as a subprocess.
