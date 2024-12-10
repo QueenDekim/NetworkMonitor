@@ -63,6 +63,42 @@ class DatabaseConnection:
         print(Fore.YELLOW + "[db]" + Fore.WHITE + " Connection closed.")
 
 #-----------------#
+# Initializes the database and the scans table if they do not exist.
+def initialize_database(cursor):
+    try:
+        # Check if the database exists
+        cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
+        result = cursor.fetchone()
+        
+        if not result:
+            # Create the database if it does not exist
+            cursor.execute("CREATE DATABASE network_monitoring")
+            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
+        
+        # Switch to the network_monitoring database
+        cursor.execute("USE network_monitoring")
+        
+        # Check if the scans table exists
+        cursor.execute("SHOW TABLES LIKE 'scans'")
+        result = cursor.fetchone()
+        
+        if not result:
+            # Create the scans table if it does not exist
+            cursor.execute("""
+                CREATE TABLE scans (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    ip VARCHAR(15),
+                    status VARCHAR(10),
+                    device_info JSON,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+                    domain VARCHAR(100) DEFAULT 'None'
+                )
+            """)
+            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
+    except Exception as e:
+        print(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
+
+#-----------------#
 # Starts the REST API as a subprocess.
 def start_api():
     # Declare global variables to be used in the function
@@ -263,20 +299,6 @@ def update_device_info(cursor, status, device_info_json, host, existing_info, ad
             cursor.connection.commit()
         except Exception as e:
             print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
-            cursor.execute(
-                "CREATE DATABASE network_monitoring;\
-                USE network_monitoring;\
-                \
-                CREATE TABLE scans (\
-                    id INT AUTO_INCREMENT PRIMARY KEY,\
-                    ip VARCHAR(15),\
-                    status VARCHAR(10),\
-                    device_info JSON,\
-                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),\
-                    domain VARCHAR(100) DEFAULT 'None'\
-                );"
-            )
-            cursor.connection.commit()
 
 
 #-----------------#
@@ -292,20 +314,6 @@ def insert_device_info(cursor, status, device_info_json, host, address):
         cursor.connection.commit()
     except Exception as e:
         print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
-        cursor.execute(
-            "CREATE DATABASE network_monitoring;\
-            USE network_monitoring;\
-            \
-            CREATE TABLE scans (\
-                id INT AUTO_INCREMENT PRIMARY KEY,\
-                ip VARCHAR(15),\
-                status VARCHAR(10),\
-                device_info JSON,\
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),\
-                domain VARCHAR(100) DEFAULT 'None'\
-            );"
-        )
-        cursor.connection.commit()
 
 
 #-----------------#
@@ -472,6 +480,9 @@ if __name__ == "__main__":
         print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting scan with provided parameters...")
         start_api()  # Launching the API
         try:
+            # Use a database connection to initialize the database and table
+            with DatabaseConnection() as cursor:
+                initialize_database(cursor)  # Initialize the database and table
             while True:
                 scan_network(args.network, args.ports)  # Performing a network scan
                 wait_time = args.interval * 60  # We calculate the waiting time in seconds
@@ -493,6 +504,9 @@ if __name__ == "__main__":
     else:
         # Start of the main program execution
         try:
+            # Use a database connection to initialize the database and table
+            with DatabaseConnection() as cursor:
+                initialize_database(cursor)  # Initialize the database and table
             # Infinite loop to continuously prompt the user for an action
             while True:
                 # Get user input for choosing an option (configure or scan)
