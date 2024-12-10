@@ -71,56 +71,54 @@ def initialize_database(cursor):
                 with DatabaseConnection() as cursor:
                     print(Fore.YELLOW + "[db]" + Fore.WHITE + " Checking MySQL status...")
                     cursor.execute("SHOW DATABASES;")  # Run a simple request to verify the connection
-                    if cursor.fetchall().length > 0:
-                        print(Fore.YELLOW + "[db]" + Fore.WHITE + " MySQL is running.")
-                        # Check if the database exists
-                        print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database...")
-                        cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
-                        result = cursor.fetchone()
+                    # if cursor.fetchall().length > 0:
+                    #     print(Fore.YELLOW + "[db]" + Fore.WHITE + " MySQL is running.")
+                    #     # Check if the database exists
+                    #     print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database...")
+                    #     cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
+                    #     result = cursor.fetchone()
                         
-                        if not result:
-                            # Create the database if it does not exist
-                            cursor.execute("CREATE DATABASE network_monitoring")
-                            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
-                        else:
-                            print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Database 'network_monitoring' exist")
+                    #     if not result:
+                    #         # Create the database if it does not exist
+                    #         cursor.execute("CREATE DATABASE network_monitoring")
+                    #         print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
+                    #     else:
+                    #         print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Database 'network_monitoring' exist")
                         
-                        # Switch to the network_monitoring database
-                        try:
-                            cursor.execute("USE network_monitoring")
-                        except Exception as e:
-                            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+                    #     # Switch to the network_monitoring database
+                    #     try:
+                    #         cursor.execute("USE network_monitoring")
+                    #     except Exception as e:
+                    #         print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
 
                         
-                        print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database table...")
-                        # Check if the scans table exists
-                        try:
-                            cursor.execute("SHOW TABLES LIKE 'scans'")
-                            result = cursor.fetchone()
+                    #     print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database table...")
+                    #     # Check if the scans table exists
+                    #     try:
+                    #         cursor.execute("SHOW TABLES LIKE 'scans'")
+                    #         result = cursor.fetchone()
                             
-                            if not result:
-                                # Create the scans table if it does not exist
-                                cursor.execute("""
-                                    CREATE TABLE scans (
-                                        id INT AUTO_INCREMENT PRIMARY KEY,
-                                        ip VARCHAR(15),
-                                        status VARCHAR(10),
-                                        device_info JSON,
-                                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-                                        domain VARCHAR(100) DEFAULT 'None'
-                                    )
-                                """)
-                                print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
-                            else: 
-                                print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Table 'scans' exist")
-                        except Exception as e:
-                            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+                    #         if not result:
+                    #             # Create the scans table if it does not exist
+                    #             cursor.execute("""
+                    #                 CREATE TABLE scans (
+                    #                     id INT AUTO_INCREMENT PRIMARY KEY,
+                    #                     ip VARCHAR(15),
+                    #                     status VARCHAR(10),
+                    #                     device_info JSON,
+                    #                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+                    #                     domain VARCHAR(100) DEFAULT 'None'
+                    #                 )
+                    #             """)
+                    #             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
+                    #         else: 
+                    #             print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Table 'scans' exist")
+                    #     except Exception as e:
+                    #         print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
                         # If the request is successful, exit the loop
             except pymysql.err.OperationalError:
                 print(Fore.RED + "[db]" + Fore.WHITE + " MySQL is not available. Retrying in 5 seconds...")
-                time.sleep(5)  # Wait 5 seconds before trying again
-        
-        
+                time.sleep(5)  # Wait 5 seconds before trying again   
     except Exception as e:
         print(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
     finally:
