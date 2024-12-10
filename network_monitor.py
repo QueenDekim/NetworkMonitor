@@ -67,6 +67,7 @@ class DatabaseConnection:
 def initialize_database(cursor):
     try:
         # Check if the database exists
+        print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database...")
         cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
         result = cursor.fetchone()
         
@@ -74,10 +75,13 @@ def initialize_database(cursor):
             # Create the database if it does not exist
             cursor.execute("CREATE DATABASE network_monitoring")
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
+        else:
+            print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Database 'network_monitoring' exist")
         
         # Switch to the network_monitoring database
         cursor.execute("USE network_monitoring")
         
+        print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database table...")
         # Check if the scans table exists
         cursor.execute("SHOW TABLES LIKE 'scans'")
         result = cursor.fetchone()
@@ -95,6 +99,8 @@ def initialize_database(cursor):
                 )
             """)
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
+        else: 
+            print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Table 'scans' exist")
     except Exception as e:
         print(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
 
@@ -500,6 +506,9 @@ if __name__ == "__main__":
         if not VENV["API_KEY"]:
             try:
                 configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval)
+                print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Creating database if not exist...")
+                with DatabaseConnection() as cursor:
+                    initialize_database(cursor)  # Initialize the database and table
                 print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Exited with exit code 0")
                 exit(0)
             except Exception as e:
