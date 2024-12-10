@@ -496,11 +496,15 @@ if __name__ == "__main__":
         if not VENV["API_KEY"]:
             try:
                 configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval)
+                print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Exited with exit code 0")
                 exit(0)
             except Exception as e:
                 print(Fore.RED + "[Error]" + Fore.WHITE + f" An error occurred during configuration")
+                print(Fore.RED + "[EXIT]" + Fore.WHITE + f" Exited with exit code 1")
                 exit(1)
+            print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Exited with exit code 0")
             exit(0)
+        print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Exited with exit code 0")
         exit(0)
     else:
         # Start of the main program execution
