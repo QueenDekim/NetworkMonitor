@@ -64,64 +64,6 @@ class DatabaseConnection:
         print(Fore.YELLOW + "[db]" + Fore.WHITE + " Connection closed.")
 
 #-----------------#
-# Initializes the database and the scans table if they do not exist.
-def initialize_database(cursor):
-    try:
-        with DatabaseConnection() as cursor:
-            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Checking MySQL status...")
-            cursor.execute("SHOW DATABASES;")  # Run a simple request to verify the connection
-            if cursor:
-                print(Fore.YELLOW + "[db]" + Fore.WHITE + " MySQL is running.")
-                # Check if the database exists
-                print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database...")
-                cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
-                result = cursor.fetchone()
-                
-                if not result:
-                    # Create the database if it does not exist
-                    cursor.execute("CREATE DATABASE network_monitoring")
-                    print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
-                else:
-                    print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Database 'network_monitoring' exist")
-                
-                # Switch to the network_monitoring database
-                try:
-                    cursor.execute("USE network_monitoring")
-                except Exception as e:
-                    print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
-
-                
-                print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database table...")
-                # Check if the scans table exists
-                try:
-                    cursor.execute("SHOW TABLES LIKE 'scans'")
-                    result = cursor.fetchone()
-                    
-                    if not result:
-                        # Create the scans table if it does not exist
-                        cursor.execute("""
-                            CREATE TABLE scans (
-                                id INT AUTO_INCREMENT PRIMARY KEY,
-                                ip VARCHAR(15),
-                                status VARCHAR(10),
-                                device_info JSON,
-                                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-                                domain VARCHAR(100) DEFAULT 'None'
-                            )
-                        """)
-                        print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
-                    else: 
-                        print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Table 'scans' exist")
-                except Exception as e:
-                    print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
-                # If the request is successful, exit the loop
-    except pymysql.err.OperationalError:
-        print(Fore.RED + "[db]" + Fore.WHITE + " MySQL is not available. Retrying in 5 seconds...")
-        time.sleep(5)  # Wait 5 seconds before trying again   
-    except Exception as e:
-        print(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
-
-#-----------------#
 # Starts the REST API as a subprocess.
 def start_api():
     # Declare global variables to be used in the function
@@ -502,15 +444,7 @@ if __name__ == "__main__":
     if args.network and args.ports and args.interval:
         print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting scan with provided parameters...")
         start_api()  # Launching the API
-        try:
-            # Use a database connection to initialize the database and table
-            try:
-                with DatabaseConnection() as cursor:
-                    initialize_database(cursor)  # Initialize the database and table
-                    
-            except pymysql.err.OperationalError as e:
-                print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
-            
+        try:            
             while True:
                 scan_network(args.network, args.ports)  # Performing a network scan
                 wait_time = args.interval * 60  # We calculate the waiting time in seconds
@@ -524,14 +458,9 @@ if __name__ == "__main__":
             terminate_api()  # Completing the API process if it is running
     elif args.db_host or args.db_user or args.db_password or args.db_name or args.venv_path or args.flask_host or args.flask_port or args.flask_debug:
         print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting configuration with provided parameters...")
-        with DatabaseConnection() as cursor:
-            initialize_database(cursor)  # Initialize the database and table
         if not VENV["API_KEY"]:
             try:
                 configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval)
-                print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Creating database if not exist...")
-                with DatabaseConnection() as cursor:
-                    initialize_database(cursor)  # Initialize the database and table
                 print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
                 exit(0)
             except Exception as e:
@@ -546,8 +475,6 @@ if __name__ == "__main__":
         # Start of the main program execution
         try:
             # Use a database connection to initialize the database and table
-            with DatabaseConnection() as cursor:
-                initialize_database(cursor)  # Initialize the database and table
             # Infinite loop to continuously prompt the user for an action
             while True:
                 # Get user input for choosing an option (configure or scan)
