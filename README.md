@@ -2,7 +2,7 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits)
 ![GitHub Repo stars](https://img.shields.io/github/stars/QueenDekim/NetworkMonitor)
 
-# NetworkMonitor (nmap, socket) + RestAPI (flask, flasgger) + DB (MySQL)
+# NetworkMonitor (nmap, socket)<br>RestAPI (flask, flasgger)<br>DB (MySQL)
 
 ## 👉 [DockerHub repository](https://hub.docker.com/r/dekimasc/networkmonitor)
 
