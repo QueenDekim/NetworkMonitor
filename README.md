@@ -1,6 +1,4 @@
-<p align="center" width="100%">
-    <img height="440px" src="https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/docker-preview.png">
-</p>
+<img src="https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/docker-preview.png" />
 
 <p align="center" width="100%">
     <img height="25px" src="https://img.shields.io/github/languages/top/QueenDekim/NetworkMonitor"> 
