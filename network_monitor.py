@@ -276,8 +276,12 @@ def insert_device_info(cursor, status, device_info_json, host, address):
 # Updates the status of devices that were not found in the current scan.
 def update_device_status(cursor, found_hosts):
     # Execute an SQL SELECT statement to retrieve all IP addresses from the scans table
-    cursor.execute("SELECT ip FROM scans")
-    all_hosts = cursor.fetchall()       # Fetch all results from the executed query
+    try:
+        cursor.execute("SELECT ip FROM scans")
+        all_hosts = cursor.fetchall()       # Fetch all results from the executed query
+    except Exception as e:
+        print(Fore.RED + "[db]" + Fore.WHITE + " Error retrieving all hosts: " + str(e))
+        return None
     
     # Iterate over each IP address retrieved from the database
     for (ip,) in all_hosts:
