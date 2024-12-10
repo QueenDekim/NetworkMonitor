@@ -8,7 +8,7 @@ WORKDIR /
 
 COPY requirements.txt ./
 COPY base.sql ./
-COPY ./wait-for-it.sh /usr/bin/wait-for-it.sh
+COPY wait-for-it.sh /usr/bin/wait-for-it.sh
 
 RUN python -m venv venv
 
