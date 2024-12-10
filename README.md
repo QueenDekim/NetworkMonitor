@@ -1,10 +1,6 @@
 <div style="text-align:center"><img src="https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/docker-preview.png" /></div>
 
-<div style="text-align:center">
-
-![GitHub top language](https://img.shields.io/github/languages/top/QueenDekim/NetworkMonitor) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits) ![GitHub Repo stars](https://img.shields.io/github/stars/QueenDekim/NetworkMonitor) 
-
-</div>
+<div style="text-align:center"><img src="https://img.shields.io/github/languages/top/QueenDekim/NetworkMonitor" /><img src="https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits" /><img src="https://img.shields.io/github/stars/QueenDekim/NetworkMonitor" /></div>
 
 
 
