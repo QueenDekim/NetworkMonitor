@@ -501,6 +501,7 @@ if __name__ == "__main__":
                 print(Fore.RED + "[Error]" + Fore.WHITE + f" An error occurred during configuration")
                 exit(1)
             exit(0)
+        exit(0)
     else:
         # Start of the main program execution
         try:
