@@ -1,5 +1,5 @@
 <p align="center" width="100%">
-    <img height="520px" src="https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/docker-preview.png">
+    <img height="440px" src="https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/docker-preview.png">
 </p>
 
 <p align="center" width="100%">
