@@ -254,23 +254,59 @@ def update_device_info(cursor, status, device_info_json, host, existing_info, ad
     # Check if the existing device information is different from the new information
     if existing_info != device_info_json:
         # Execute an SQL UPDATE statement to update the device's status and information in the database
-        cursor.execute(
-            "UPDATE scans SET status = %s, device_info = %s, timestamp = CURRENT_TIMESTAMP, domain = %s WHERE ip = %s",
-            (status, device_info_json, address, host)    # Parameters for the SQL query
-        )
-        print(Fore.YELLOW + "[db]" + Fore.WHITE + " Updated information about " + Fore.GREEN + f"{host}")
-        cursor.connection.commit()
+        try:
+            cursor.execute(
+                "UPDATE scans SET status = %s, device_info = %s, timestamp = CURRENT_TIMESTAMP, domain = %s WHERE ip = %s",
+                (status, device_info_json, address, host)    # Parameters for the SQL query
+            )
+            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Updated information about " + Fore.GREEN + f"{host}")
+            cursor.connection.commit()
+        except Exception as e:
+            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+            cursor.execute(
+                "CREATE DATABASE network_monitoring;\
+                USE network_monitoring;\
+                \
+                CREATE TABLE scans (\
+                    id INT AUTO_INCREMENT PRIMARY KEY,\
+                    ip VARCHAR(15),\
+                    status VARCHAR(10),\
+                    device_info JSON,\
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),\
+                    domain VARCHAR(100) DEFAULT 'None'\
+                );"
+            )
+            cursor.connection.commit()
+
 
 #-----------------#
 # Inserts new device information into the database.
 def insert_device_info(cursor, status, device_info_json, host, address):
     # Execute an SQL INSERT statement to add a new device's information to the database
-    cursor.execute(
-        "INSERT INTO scans (ip, status, device_info, domain) VALUES (%s, %s, %s, %s)",
-        (host, status, device_info_json, address)        # Parameters for the SQL query
-    )
-    print(Fore.YELLOW + "[db]" + Fore.WHITE + " Inserted information about " + Fore.GREEN + f"{host}")
-    cursor.connection.commit()
+    try:
+        cursor.execute(
+            "INSERT INTO scans (ip, status, device_info, domain) VALUES (%s, %s, %s, %s)",
+            (host, status, device_info_json, address)        # Parameters for the SQL query
+        )
+        print(Fore.YELLOW + "[db]" + Fore.WHITE + " Inserted information about " + Fore.GREEN + f"{host}")
+        cursor.connection.commit()
+    except Exception as e:
+        print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+        cursor.execute(
+            "CREATE DATABASE network_monitoring;\
+            USE network_monitoring;\
+            \
+            CREATE TABLE scans (\
+                id INT AUTO_INCREMENT PRIMARY KEY,\
+                ip VARCHAR(15),\
+                status VARCHAR(10),\
+                device_info JSON,\
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),\
+                domain VARCHAR(100) DEFAULT 'None'\
+            );"
+        )
+        cursor.connection.commit()
+
 
 #-----------------#
 # Updates the status of devices that were not found in the current scan.
