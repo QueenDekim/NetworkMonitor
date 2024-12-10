@@ -436,7 +436,9 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
 
     print(Fore.GREEN + "[Config]" + Fore.WHITE + " Configuration saved to config.py.")
     print(Fore.GREEN + "[API]" + Fore.WHITE + " API available at http://" + flask_host + ":" + str(flask_port) + "/")
-    print(Fore.GREEN + "[Config]" + Fore.WHITE + " Yor API key is: " + Fore.YELLOW + api_key + Fore.WHITE)
+    print(Fore.GREEN + "==========================================================" + Fore.WHITE)
+    print(Fore.GREEN + "[Config]" + Fore.WHITE + " Your API key is: " + Fore.YELLOW + api_key + Fore.WHITE)
+    print(Fore.GREEN + "==========================================================" + Fore.WHITE)
 
 #-----------------#
 # Generate Api Key (MD5)
@@ -525,7 +527,7 @@ if __name__ == "__main__":
         print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting configuration with provided parameters...")
         try:
             configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval)
-            print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Creating database if not exist...")
+            print(Fore.YELLOW + "[DB]" + Fore.WHITE + " Creating database if not exist...")
             with DatabaseConnection() as cursor:
                 initialize_database(cursor)  # Initialize the database and table
             print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
