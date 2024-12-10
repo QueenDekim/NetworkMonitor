@@ -525,30 +525,22 @@ if __name__ == "__main__":
             terminate_api()  # Completing the API process if it is running
     elif args.db_host or args.db_user or args.db_password or args.db_name or args.venv_path or args.flask_host or args.flask_port or args.flask_debug:
         print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting configuration with provided parameters...")
-        with DatabaseConnection() as cursor:
-            initialize_database(cursor)  # Initialize the database and table
-        if not VENV["API_KEY"]:
-            try:
-                configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval)
-                print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Creating database if not exist...")
-                with DatabaseConnection() as cursor:
-                    initialize_database(cursor)  # Initialize the database and table
-                print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
-                exit(0)
-            except Exception as e:
-                print(Fore.RED + "[Error]" + Fore.WHITE + f" An error occurred during configuration")
-                print(Fore.RED + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 1")
-                exit(1)
+        try:
+            configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval)
+            print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Creating database if not exist...")
+            with DatabaseConnection() as cursor:
+                initialize_database(cursor)  # Initialize the database and table
             print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
             exit(0)
+        except Exception as e:
+            print(Fore.RED + "[Error]" + Fore.WHITE + f" An error occurred during configuration")
+            print(Fore.RED + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 1")
+            exit(1)
         print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
         exit(0)
     else:
         # Start of the main program execution
         try:
-            # Use a database connection to initialize the database and table
-            with DatabaseConnection() as cursor:
-                initialize_database(cursor)  # Initialize the database and table
             # Infinite loop to continuously prompt the user for an action
             while True:
                 # Get user input for choosing an option (configure or scan)

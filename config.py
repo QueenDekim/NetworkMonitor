@@ -1,7 +1,7 @@
 DB_CONFIG = {
     "host": "db",
     "user": "root",
-    "password": "mysecretpasword",
+    "password": "mysecretpassword",
     "database": "network_monitoring"
 }
 
