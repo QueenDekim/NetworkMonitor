@@ -14,38 +14,38 @@
     version: '3.8'
 
     services:
-        app:
-            image: dekimasc/networkmonitor:latest
-            volumes:
-                - .:/app
-            depends_on:
-                - db
-            ports:
-                - "5000:5000"
-            environment:
-                NETWORK: 192.168.1.0/24
-                PORTS: 22,443,80
-                INTERVAL: 1.0
-                DB_HOST: db
-                DB_USER: root
-                DB_PASSWORD: mysecretpassword
-                DB_NAME: network_monitoring
-                FLASK_HOST: 0.0.0.0
-                FLASK_PORT: 5000
-                FLASK_DEBUG: True
+      app:
+        image: dekimasc/networkmonitor:latest
+        volumes:
+          - .:/app
+        depends_on:
+          - db
+        ports:
+          - "5000:5000"
+        environment:
+          NETWORK: 192.168.1.0/24
+          PORTS: 22,443,80
+          INTERVAL: 1.0
+          DB_HOST: db
+          DB_USER: root
+          DB_PASSWORD: mysecretpassword
+          DB_NAME: network_monitoring
+          FLASK_HOST: 0.0.0.0
+          FLASK_PORT: 5000
+          FLASK_DEBUG: True
 
-        db:
-            image: mysql:5.7
-            restart: always
-            environment:
-                MYSQL_ROOT_PASSWORD: mysecretpassword
-                MYSQL_DATABASE: network_monitoring
-            volumes:
-                - db_data:/var/lib/mysql
-                - ./base.sql:/docker-entrypoint-initdb.d/base.sql
+      db:
+        image: mysql:5.7
+        restart: always
+        environment:
+          MYSQL_ROOT_PASSWORD: mysecretpassword
+          MYSQL_DATABASE: network_monitoring
+        volumes:
+          - db_data:/var/lib/mysql
+          - ./base.sql:/docker-entrypoint-initdb.d/base.sql
 
     volumes:
-        db_data:
+      db_data:
     ```
     *Replace the values of `NETWORK`, `PORTS`, `INTERVAL`, etc. with yours*<br>
     Run `docker-compose up -d` *(or `docker compose up -d` if you use `docker-compose-plugin` for `Docker CE`)* to start the containers.
