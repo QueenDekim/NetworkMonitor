@@ -120,11 +120,6 @@ def initialize_database(cursor):
         time.sleep(5)  # Wait 5 seconds before trying again   
     except Exception as e:
         print(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
-    finally:
-        try:
-            cursor.close()
-        except Exception as e:
-            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
 
 #-----------------#
 # Starts the REST API as a subprocess.
@@ -511,7 +506,6 @@ if __name__ == "__main__":
             # Use a database connection to initialize the database and table
             try:
                 with DatabaseConnection() as cursor:
-                    time.sleep(300)
                     initialize_database(cursor)  # Initialize the database and table
                     
             except pymysql.err.OperationalError as e:
@@ -530,17 +524,13 @@ if __name__ == "__main__":
             terminate_api()  # Completing the API process if it is running
     elif args.db_host or args.db_user or args.db_password or args.db_name or args.venv_path or args.flask_host or args.flask_port or args.flask_debug:
         print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting configuration with provided parameters...")
-        time.sleep(300)
         with DatabaseConnection() as cursor:
-            time.sleep(300)
             initialize_database(cursor)  # Initialize the database and table
         if not VENV["API_KEY"]:
             try:
-                time.sleep(300)
                 configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval)
                 print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Creating database if not exist...")
                 with DatabaseConnection() as cursor:
-                    time.sleep(300)
                     initialize_database(cursor)  # Initialize the database and table
                 print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
                 exit(0)
@@ -557,7 +547,6 @@ if __name__ == "__main__":
         try:
             # Use a database connection to initialize the database and table
             with DatabaseConnection() as cursor:
-                time.sleep(300)
                 initialize_database(cursor)  # Initialize the database and table
             # Infinite loop to continuously prompt the user for an action
             while True:
