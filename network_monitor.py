@@ -500,7 +500,7 @@ if __name__ == "__main__":
             # Use a database connection to initialize the database and table
             while True:
                 try:
-                    connection = pymysql.connect(host=DB_CONFIG['host'],
+                    cursor = pymysql.connect(host=DB_CONFIG['host'],
                         user=DB_CONFIG['user'],
                         password=DB_CONFIG['password'],
                         database=DB_CONFIG['database'],
@@ -508,13 +508,13 @@ if __name__ == "__main__":
                     )
                     print(Fore.GREEN + "[db]" + Fore.WHITE + " Connected to MySQL.")
 
-                    initialize_database(connection)  # Initialize the database and table
+                    initialize_database(cursor)  # Initialize the database and table
                     break
                 except pymysql.err.OperationalError as e:
                     print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
                 finally:
-                    if connection:
-                        connection.close()
+                    if cursor:
+                        cursor.close()
                         break
             
             while True:
