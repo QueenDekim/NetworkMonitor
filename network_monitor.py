@@ -72,7 +72,7 @@ def initialize_database(cursor):
         if cursor:
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " MySQL is running.")
             # Check if the database exists
-            print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database...")
+            print(Fore.YELLOW + "[DB]" + Fore.WHITE + " Cheking database...")
             cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
             result = cursor.fetchone()
             
@@ -81,7 +81,7 @@ def initialize_database(cursor):
                 cursor.execute("CREATE DATABASE network_monitoring")
                 print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
             else:
-                print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Database 'network_monitoring' exist")
+                print(Fore.YELLOW + "[DB]" + Fore.WHITE + " Database 'network_monitoring' exists.")
             
             # Switch to the network_monitoring database
             try:
@@ -90,7 +90,7 @@ def initialize_database(cursor):
                 print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
 
             
-            print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database table...")
+            print(Fore.YELLOW + "[DB]" + Fore.WHITE + " Cheking database table...")
             # Check if the scans table exists
             try:
                 cursor.execute("SHOW TABLES LIKE 'scans'")
@@ -110,7 +110,7 @@ def initialize_database(cursor):
                     """)
                     print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
                 else: 
-                    print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Table 'scans' exist")
+                    print(Fore.YELLOW + "[DB]" + Fore.WHITE + " Table 'scans' exists.")
             except Exception as e:
                 print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
             # If the request is successful, exit the loop
