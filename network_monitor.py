@@ -484,9 +484,13 @@ if __name__ == "__main__":
             with DatabaseConnection() as cursor:
                 initialize_database(cursor)  # Initialize the database and table
             while True:
+
                 scan_network(args.network, args.ports)  # Performing a network scan
                 wait_time = args.interval * 60  # We calculate the waiting time in seconds
-                print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {args.interval} minutes before next scan...")
+                if args.interval < 1:
+                    print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
+                else:
+                    print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
                 time.sleep(wait_time)  # Waiting for the specified time before the next scan
         except KeyboardInterrupt:
             print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
