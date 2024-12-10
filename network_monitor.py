@@ -66,6 +66,15 @@ class DatabaseConnection:
 # Initializes the database and the scans table if they do not exist.
 def initialize_database(cursor):
     try:
+        while True:
+            try:
+                print(Fore.YELLOW + "[db]" + Fore.WHITE + " Checking MySQL status...")
+                cursor.execute("SELECT 1")  # Run a simple request to verify the connection
+                break  # If the request is successful, exit the loop
+            except pymysql.err.OperationalError:
+                print(Fore.RED + "[db]" + Fore.WHITE + " MySQL is not available. Retrying in 5 seconds...")
+                time.sleep(5)  # Wait 5 seconds before trying again
+        
         # Check if the database exists
         print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database...")
         cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
