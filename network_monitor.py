@@ -68,7 +68,6 @@ class DatabaseConnection:
 def initialize_database(cursor):
     try:
         with DatabaseConnection() as cursor:
-            print(DB_CONFIG['password'])
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Checking MySQL status...")
             cursor.execute("SHOW DATABASES;")  # Run a simple request to verify the connection
             if cursor:
