@@ -31,30 +31,29 @@ class DatabaseConnection:
 
     def __enter__(self):
         # Establishes a database connection and returns the cursor for executing queries.
-        while True:
-            try:
-                # Create a new database connection using pymysql
-                self.connection = pymysql.connect(
-                    host=DB_CONFIG['host'],
-                    user=DB_CONFIG['user'],
-                    password=DB_CONFIG['password'],
-                    database=DB_CONFIG['database'],
-                    charset='utf8mb4'
-                )
-                # Create a cursor object to interact with the database
-                self.cursor = self.connection.cursor()
-                print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database connection established.")
-                if self.cursor:
-                    return self.cursor      # Return the cursor for use in the with statement
-            except pymysql.err.OperationalError as e:
-                print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
-                return None  # Return None to indicate the connection failed
-            except UnicodeEncodeError:
-                # Handle the case where the password cannot be encoded
-                print(Fore.RED + "[db]" + Fore.WHITE + " Error: unable to encode password")
-            except Exception as e:
-                print(Fore.RED + "[db]" + Fore.WHITE + f" An error occurred: {e}")
-                return None  # Return None to indicate the connection failed
+        try:
+            # Create a new database connection using pymysql
+            self.connection = pymysql.connect(
+                host=DB_CONFIG['host'],
+                user=DB_CONFIG['user'],
+                password=DB_CONFIG['password'],
+                database=DB_CONFIG['database'],
+                charset='utf8mb4'
+            )
+            # Create a cursor object to interact with the database
+            self.cursor = self.connection.cursor()
+            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database connection established.")
+            if self.cursor:
+                return self.cursor      # Return the cursor for use in the with statement
+        except pymysql.err.OperationalError as e:
+            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
+            return None  # Return None to indicate the connection failed
+        except UnicodeEncodeError:
+            # Handle the case where the password cannot be encoded
+            print(Fore.RED + "[db]" + Fore.WHITE + " Error: unable to encode password")
+        except Exception as e:
+            print(Fore.RED + "[db]" + Fore.WHITE + f" An error occurred: {e}")
+            return None  # Return None to indicate the connection failed
 
     def __exit__(self, exc_type, exc_value, traceback):
         # Closes the database connection and cursor when exiting the context.
@@ -68,59 +67,57 @@ class DatabaseConnection:
 # Initializes the database and the scans table if they do not exist.
 def initialize_database(cursor):
     try:
-        while True:
-            try:
-                with DatabaseConnection() as cursor:
-                    print(Fore.YELLOW + "[db]" + Fore.WHITE + " Checking MySQL status...")
-                    cursor.execute("SHOW DATABASES;")  # Run a simple request to verify the connection
-                    # if cursor.fetchall().length > 0:
-                    #     print(Fore.YELLOW + "[db]" + Fore.WHITE + " MySQL is running.")
-                    #     # Check if the database exists
-                    #     print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database...")
-                    #     cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
-                    #     result = cursor.fetchone()
-                        
-                    #     if not result:
-                    #         # Create the database if it does not exist
-                    #         cursor.execute("CREATE DATABASE network_monitoring")
-                    #         print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
-                    #     else:
-                    #         print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Database 'network_monitoring' exist")
-                        
-                    #     # Switch to the network_monitoring database
-                    #     try:
-                    #         cursor.execute("USE network_monitoring")
-                    #     except Exception as e:
-                    #         print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+        with DatabaseConnection() as cursor:
+            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Checking MySQL status...")
+            cursor.execute("SHOW DATABASES;")  # Run a simple request to verify the connection
+            if cursor:
+                print(Fore.YELLOW + "[db]" + Fore.WHITE + " MySQL is running.")
+                # Check if the database exists
+                print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database...")
+                cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
+                result = cursor.fetchone()
+                
+                if not result:
+                    # Create the database if it does not exist
+                    cursor.execute("CREATE DATABASE network_monitoring")
+                    print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
+                else:
+                    print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Database 'network_monitoring' exist")
+                
+                # Switch to the network_monitoring database
+                try:
+                    cursor.execute("USE network_monitoring")
+                except Exception as e:
+                    print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
 
-                        
-                    #     print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database table...")
-                    #     # Check if the scans table exists
-                    #     try:
-                    #         cursor.execute("SHOW TABLES LIKE 'scans'")
-                    #         result = cursor.fetchone()
-                            
-                    #         if not result:
-                    #             # Create the scans table if it does not exist
-                    #             cursor.execute("""
-                    #                 CREATE TABLE scans (
-                    #                     id INT AUTO_INCREMENT PRIMARY KEY,
-                    #                     ip VARCHAR(15),
-                    #                     status VARCHAR(10),
-                    #                     device_info JSON,
-                    #                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-                    #                     domain VARCHAR(100) DEFAULT 'None'
-                    #                 )
-                    #             """)
-                    #             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
-                    #         else: 
-                    #             print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Table 'scans' exist")
-                    #     except Exception as e:
-                    #         print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
-                        # If the request is successful, exit the loop
-            except pymysql.err.OperationalError:
-                print(Fore.RED + "[db]" + Fore.WHITE + " MySQL is not available. Retrying in 5 seconds...")
-                time.sleep(5)  # Wait 5 seconds before trying again   
+                
+                print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Cheking database table...")
+                # Check if the scans table exists
+                try:
+                    cursor.execute("SHOW TABLES LIKE 'scans'")
+                    result = cursor.fetchone()
+                    
+                    if not result:
+                        # Create the scans table if it does not exist
+                        cursor.execute("""
+                            CREATE TABLE scans (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                ip VARCHAR(15),
+                                status VARCHAR(10),
+                                device_info JSON,
+                                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
+                                domain VARCHAR(100) DEFAULT 'None'
+                            )
+                        """)
+                        print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
+                    else: 
+                        print(Fore.YELLOW + "[DB]" + Fore.WHITE + "Table 'scans' exist")
+                except Exception as e:
+                    print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+                # If the request is successful, exit the loop
+    except pymysql.err.OperationalError:
+        print(Fore.RED + "[db]" + Fore.WHITE + " MySQL is not available. Retrying in 5 seconds...")
+        time.sleep(5)  # Wait 5 seconds before trying again   
     except Exception as e:
         print(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
     finally:
@@ -512,15 +509,13 @@ if __name__ == "__main__":
         start_api()  # Launching the API
         try:
             # Use a database connection to initialize the database and table
-            while True:
-                try:
-                    with DatabaseConnection() as cursor:
-                        print(Fore.GREEN + "[db]" + Fore.WHITE + " Connected to MySQL.")
-
-                        initialize_database(cursor)  # Initialize the database and table
-                        break
-                except pymysql.err.OperationalError as e:
-                    print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
+            try:
+                with DatabaseConnection() as cursor:
+                    time.sleep(300)
+                    initialize_database(cursor)  # Initialize the database and table
+                    
+            except pymysql.err.OperationalError as e:
+                print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
             
             while True:
 
@@ -559,6 +554,7 @@ if __name__ == "__main__":
         try:
             # Use a database connection to initialize the database and table
             with DatabaseConnection() as cursor:
+                time.sleep(300)
                 initialize_database(cursor)  # Initialize the database and table
             # Infinite loop to continuously prompt the user for an action
             while True:
