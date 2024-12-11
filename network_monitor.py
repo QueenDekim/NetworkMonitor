@@ -5,6 +5,7 @@ import pymysql                                                      # Import pym
 import json                                                         # Import json for working with JSON data
 import time                                                         # Import time for time-related functions
 from colorama import Fore                                           # Import Fore from colorama for colored terminal text
+import config
 from config import DB_CONFIG, VENV, FLASK_CONFIG, SCAN_CONFIG       # Import configuration settings from the config module
 import subprocess                                                   # Import subprocess for executing shell commands
 import os                                                           # Import os for operating system dependent functionality
@@ -15,6 +16,7 @@ import random
 import hashlib
 import argparse
 from art import *
+import importlib
 
 #-----------------#
 # Global variables to manage the API process state
@@ -529,7 +531,7 @@ if __name__ == "__main__":
             '''NetworkMonitor
             by DekimDev''', "colossal"
         )
-        print(Fore.RED + logo)
+        print(Fore.CYAN + logo)
         print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting configuration with provided parameters...")
         try:
             configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval)
@@ -551,7 +553,7 @@ if __name__ == "__main__":
                 '''NetworkMonitor
                 by DekimDev''', "colossal"
             )
-            print(Fore.RED + logo)
+            print(Fore.CYAN + logo)
             # Infinite loop to continuously prompt the user for an action
             while True:
                 # Get user input for choosing an option (configure or scan)
@@ -561,6 +563,11 @@ if __name__ == "__main__":
                 # If the user chooses to configure settings
                 if choice == "1":
                     configure_settings()
+                    importlib.reload(config)
+                    DB_CONFIG = config.DB_CONFIG
+                    VENV = config.VENV
+                    FLASK_CONFIG = config.FLASK_CONFIG
+                    SCAN_CONFIG = config.SCAN_CONFIG
                 # If the user chooses to start scanning
                 elif choice == "2":
                     start_api()             # Start the API
