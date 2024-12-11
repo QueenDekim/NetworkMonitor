@@ -410,7 +410,8 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         },
         "VENV": {
             "PATH": venv_path,
-            "API_KEY": api_key
+            "API_KEY": api_key,
+            "VERSION": "1.1"
         },
         "FLASK_CONFIG": {
             "HOST": flask_host,
