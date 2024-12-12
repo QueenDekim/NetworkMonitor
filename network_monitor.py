@@ -406,7 +406,7 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
     if db_user is None:
         db_user = get_user_input(f"Database User (default: {DB_CONFIG['user']}): ", f"{DB_CONFIG['user']}")
     if db_password is None:
-        db_password = getpass.getpass("Database Password (default: password): ") or "password"
+        db_password = getpass.getpass("Database Password (default: mysecretpassword): ") or "mysecretpassword"
     if db_name is None:
         db_name = get_user_input(f"Database Name (default: {DB_CONFIG['database']}): ", f"{DB_CONFIG['database']}")
     if venv_path is None:
@@ -546,6 +546,11 @@ if __name__ == "__main__":
             # Use a database connection to initialize the database and table
             try:
                 with DatabaseConnection() as cursor:
+                    importlib.reload(config)
+                    DB_CONFIG = config.DB_CONFIG
+                    VENV = config.VENV
+                    FLASK_CONFIG = config.FLASK_CONFIG
+                    SCAN_CONFIG = config.SCAN_CONFIG
                     initialize_database(cursor)  # Initialize the database and table                    
             except pymysql.err.OperationalError as e:
                 print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
@@ -579,6 +584,11 @@ if __name__ == "__main__":
             configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval, args.spd_test)
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Creating database if not exist...")
             with DatabaseConnection() as cursor:
+                importlib.reload(config)
+                DB_CONFIG = config.DB_CONFIG
+                VENV = config.VENV
+                FLASK_CONFIG = config.FLASK_CONFIG
+                SCAN_CONFIG = config.SCAN_CONFIG
                 initialize_database(cursor)  # Initialize the database and table
             print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
             exit(0)
