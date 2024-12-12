@@ -584,7 +584,7 @@ if __name__ == "__main__":
             print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
             exit(0)
         except Exception as e:
-            print(Fore.RED + "[Error]" + Fore.WHITE + f" An error occurred during configuration")
+            print(Fore.RED + "[Error]" + Fore.WHITE + f" An error occurred during configuration: {e}")
             print(Fore.RED + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 1")
             exit(1)
         print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
