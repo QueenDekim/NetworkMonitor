@@ -1,14 +1,14 @@
 DB_CONFIG = {
     "host": "db",
     "user": "root",
-    "password": "password",
+    "password": "mysecretpassword",
     "database": "network_monitoring"
 }
 
 VENV = {
     "PATH": ".\\venv",
-    "API_KEY": "522da2f56825aee45968328eacd90aa0",
-    "VERSION": "1.1"
+    "API_KEY": "",
+    "VERSION": "1.1.1"
 }
 
 FLASK_CONFIG = {'HOST': '0.0.0.0', 'PORT': 5000, 'DEBUG': True}
