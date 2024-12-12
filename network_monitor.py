@@ -17,6 +17,7 @@ import hashlib
 import argparse
 from art import *
 import importlib
+import speedtest
 
 #-----------------#
 # Global variables to manage the API process state
@@ -122,6 +123,30 @@ def initialize_database(cursor):
         time.sleep(5)  # Wait 5 seconds before trying again   
     except Exception as e:
         print(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
+
+#-----------------#
+# Speedtest.
+def spd_test():
+    st = speedtest.Speedtest()
+
+    ds = st.download()
+    us = st.upload()
+    st.get_servers([])
+    ping = st.results.ping
+
+    print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Download speed: {humansize(ds)}")
+    print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Upload speed: {humansize(us)}")
+    print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Ping: {ping} ms")
+
+def humansize(nbytes):
+    suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    i = 0
+    while nbytes >= 1024 and i < len(suffixes)-1:
+        nbytes /= 1024.
+        i += 1
+    f = ('%.2f' % nbytes).rstrip('0').rstrip('.')
+    return '%s %s' % (f, suffixes[i])
+
 
 #-----------------#
 # Starts the REST API as a subprocess.
@@ -364,7 +389,7 @@ def update_device_status(cursor, found_hosts):
 
 #-----------------#
 # Configures database and other settings based on user input.
-def configure_settings(db_host=None, db_user=None, db_password=None, db_name=None, venv_path=None, flask_host=None, flask_port=None, flask_debug=None, default_network=None, default_ports=None, default_interval=None):
+def configure_settings(db_host=None, db_user=None, db_password=None, db_name=None, venv_path=None, flask_host=None, flask_port=None, flask_debug=None, default_network=None, default_ports=None, default_interval=None, spd_test=None):
     
 
     random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
@@ -399,6 +424,9 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         default_ports = get_user_input(f"Default Ports to Scan (default: {SCAN_CONFIG['DEFAULT_PORTS']}): ", f"{SCAN_CONFIG['DEFAULT_PORTS']}")
     if default_interval is None:
         default_interval = float(get_user_input(f"Default Scan Interval (minutes, default: {SCAN_CONFIG['DEFAULT_INTERVAL']}): ", f"{SCAN_CONFIG['DEFAULT_INTERVAL']}"))
+    if spd_test is None:
+        spd_test_input = get_user_input(f"Speedtest before scan (default: {SCAN_CONFIG['SPD_TEST']}): ", f"{SCAN_CONFIG['SPD_TEST']}")
+        spd_test = spd_test_input.lower() in ['true', '1', 'yes']
 
     # Compile all configuration data into a dictionary
     config_data = {
@@ -421,7 +449,8 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         "SCAN_CONFIG": {
             "DEFAULT_NETWORK": default_network,
             "DEFAULT_PORTS": default_ports,
-            "DEFAULT_INTERVAL": default_interval
+            "DEFAULT_INTERVAL": default_interval,
+            "SPD_TEST": spd_test
         }
     }
 
@@ -436,7 +465,9 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         config_file.write("FLASK_CONFIG = ")
         config_file.write(f"{{'HOST': '{flask_host}', 'PORT': {flask_port}, 'DEBUG': {str(flask_debug).capitalize()}}}\n")  # Write FLASK_CONFIG section
         config_file.write("\nSCAN_CONFIG = ")
-        config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))     # Write SCAN_CONFIG section
+        config_file.write(f"{{\n'DEFAULT_NETWORK': '{default_network}',\n'DEFAULT_PORTS': '{default_ports}',\n'DEFAULT_INTERVAL': {default_interval},\n'SPD_TEST': {str(spd_test).capitalize()}\n}}\n")
+        
+        # config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))     # Write SCAN_CONFIG section
 
     print(Fore.GREEN + "[Config]" + Fore.WHITE + " Configuration saved to config.py.")
     print(Fore.GREEN + "[API]" + Fore.WHITE + " API available at http://" + flask_host + ":" + str(flask_port) + "/")
@@ -499,6 +530,7 @@ if __name__ == "__main__":
     parser.add_argument('--default_network', type=str, help='Default Network')
     parser.add_argument('--default_ports', type=str, help='Default ports')
     parser.add_argument('--default_interval', type=float, help='Default interval')
+    parser.add_argument('--spd_test', type=bool, help='Speedtest before scan')
 
     # Parsing arguments
     args = parser.parse_args()
@@ -511,11 +543,13 @@ if __name__ == "__main__":
             # Use a database connection to initialize the database and table
             try:
                 with DatabaseConnection() as cursor:
-                    initialize_database(cursor)  # Initialize the database and table
-                    
+                    initialize_database(cursor)  # Initialize the database and table                    
             except pymysql.err.OperationalError as e:
                 print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
-            
+            if SCAN_CONFIG["SPD_TEST"]:
+                print(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
+                spd_test()
+                        
             while True:
                 scan_network(args.network, args.ports)  # Performing a network scan
                 wait_time = args.interval * 60  # We calculate the waiting time in seconds
@@ -527,7 +561,7 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
             terminate_api()  # Completing the API process if it is running
-    elif args.db_host or args.db_user or args.db_password or args.db_name or args.venv_path or args.flask_host or args.flask_port or args.flask_debug:
+    elif args.db_host or args.db_user or args.db_password or args.db_name or args.venv_path or args.flask_host or args.flask_port or args.flask_debug or args.spd_test:
         logo = text2art(
             '''NetworkMonitor
             by DekimDev''', "colossal"
@@ -539,7 +573,7 @@ if __name__ == "__main__":
         print("")
         print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting configuration with provided parameters...")
         try:
-            configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval)
+            configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval, args.spd_test)
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Creating database if not exist...")
             with DatabaseConnection() as cursor:
                 initialize_database(cursor)  # Initialize the database and table
@@ -586,6 +620,10 @@ if __name__ == "__main__":
                     interval = float(get_user_input("Scan interval (minutes)  " + Fore.CYAN + f"(default: {SCAN_CONFIG['DEFAULT_INTERVAL']}): " + Fore.WHITE, f"{SCAN_CONFIG['DEFAULT_INTERVAL']}"))
 
                     try:
+                        if SCAN_CONFIG["SPD_TEST"]:
+                            print(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
+                            spd_test()
+                        
                         # Infinite loop to perform scanning at specified intervals
                         while True:
                             scan_network(network, ports)        # Perform the network scan
