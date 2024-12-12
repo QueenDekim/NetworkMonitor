@@ -465,7 +465,7 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         config_file.write("FLASK_CONFIG = ")
         config_file.write(f"{{'HOST': '{flask_host}', 'PORT': {flask_port}, 'DEBUG': {str(flask_debug).capitalize()}}}\n")  # Write FLASK_CONFIG section
         config_file.write("\nSCAN_CONFIG = ")
-        config_file.write(f"{{\n'   DEFAULT_NETWORK': '{default_network}',\n'   DEFAULT_PORTS': '{default_ports}',\n'   DEFAULT_INTERVAL': {default_interval},\n'   SPD_TEST': {str(spd_test).capitalize()}\n}}\n")
+        config_file.write(f"{{\n    'DEFAULT_NETWORK': '{default_network}',\n    'DEFAULT_PORTS': '{default_ports}',\n  'DEFAULT_INTERVAL': {default_interval},\n   'SPD_TEST': {str(spd_test).capitalize()}\n}}\n")
         
         # config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))     # Write SCAN_CONFIG section
 
