@@ -579,7 +579,6 @@ if __name__ == "__main__":
             configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval, args.spd_test)
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Creating database if not exist...")
             with DatabaseConnection() as cursor:
-                print(DB_CONFIG["DB_PASSWORD"])
                 initialize_database(cursor)  # Initialize the database and table
             print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
             exit(0)
