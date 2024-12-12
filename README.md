@@ -118,6 +118,57 @@ In the `Scan`, specify the scan parameters (if you press `Enter` without specify
 
 ![demo](https://github.com/QueenDekim/NetworkMonitor/blob/main/demo/log.png)
 
+---
+
+Using with arguments:<br>
+Try `python network_monitor.py -h`:
+```log
+usage: network_monitor.py [-h] [--network NETWORK] [--ports PORTS] [--interval INTERVAL] [--db_host DB_HOST] [--db_user DB_USER] [--db_password DB_PASSWORD] [--db_name DB_NAME] [--venv_path VENV_PATH] [--flask_host FLASK_HOST]
+                          [--flask_port FLASK_PORT] [--flask_debug FLASK_DEBUG] [--default_network DEFAULT_NETWORK] [--default_ports DEFAULT_PORTS] [--default_interval DEFAULT_INTERVAL] [--spd_test SPD_TEST]
+
+Network Monitor
+
+options:
+  -h, --help            show this help message and exit
+  --network NETWORK     Network to scan
+  --ports PORTS         Ports to scan
+  --interval INTERVAL   Scan interval in minutes
+  --db_host DB_HOST     Database Host
+  --db_user DB_USER     Database User
+  --db_password DB_PASSWORD
+                        Database Password
+  --db_name DB_NAME     Database Name
+  --venv_path VENV_PATH
+                        Virtual Environment Path
+  --flask_host FLASK_HOST
+                        Flask Host
+  --flask_port FLASK_PORT
+                        Flask Port
+  --flask_debug FLASK_DEBUG
+                        Flask Debug (True/False)
+  --default_network DEFAULT_NETWORK
+                        Default Network
+  --default_ports DEFAULT_PORTS
+                        Default ports
+  --default_interval DEFAULT_INTERVAL
+                        Default interval
+  --spd_test SPD_TEST   Speedtest before scan
+```
+For configuration only use 
+```
+python network_monitor.py --db_host <host> --db_user <user> --db_password <password> --db_name <db name> --venv_path "./venv" --flask_host <flask host> --flask_port <flask port> --flask_debug <True/False> --default_network <network> --default_ports <ports> --default_interval <interval> --spd_test <True/False>
+```
+For scan use
+```
+python network_monitor.py --network <network> --ports <ports> --interval <interval>
+```
+
+# DON'T USE THESE ARGS TOGETHER!!!
+## When using configuration args, after the configuration is completed, the process shuts down
+
+
+---
+
 After information about the found devices appears, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
 
 Response example in `Json` format:
