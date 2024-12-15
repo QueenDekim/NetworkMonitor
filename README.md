@@ -92,7 +92,8 @@ Run `network_monitor.py` and select Configure or Scan
 Choose an option:
 1. Configure
 2. Scan
-Enter your choice:
+3. Generate/Regenerate API Key
+4. SpeedTest
 ```
 
 In `Configure`, you can enter data for logging into the database, Flask parameters (API), and standard values for the fields for entering scan parameters (if you press `Enter` without specifying the data, the default value will be used):
@@ -123,16 +124,23 @@ In the `Scan`, specify the scan parameters (if you press `Enter` without specify
 Using with arguments:<br>
 Try `python network_monitor.py -h`:
 ```log
-usage: network_monitor.py [-h] [--network NETWORK] [--ports PORTS] [--interval INTERVAL] [--db_host DB_HOST] [--db_user DB_USER] [--db_password DB_PASSWORD] [--db_name DB_NAME] [--venv_path VENV_PATH] [--flask_host FLASK_HOST]
-                          [--flask_port FLASK_PORT] [--flask_debug FLASK_DEBUG] [--default_network DEFAULT_NETWORK] [--default_ports DEFAULT_PORTS] [--default_interval DEFAULT_INTERVAL] [--spd_test SPD_TEST]
+usage: network_monitor.py [-h] [--config | --scan] [--network NETWORK] [--ports PORTS] [--interval INTERVAL] [--db_host DB_HOST] [--db_user DB_USER] [--db_password DB_PASSWORD] [--db_name DB_NAME]
+                          [--venv_path VENV_PATH] [--flask_host FLASK_HOST] [--flask_port FLASK_PORT] [--flask_debug FLASK_DEBUG] [--default_network DEFAULT_NETWORK] [--default_ports DEFAULT_PORTS]
+                          [--default_interval DEFAULT_INTERVAL] [--spd_test SPD_TEST]
 
-Network Monitor
+Network Monitor v1.1.2
 
 options:
   -h, --help            show this help message and exit
+  --config              Run configuration
+  --scan                Run scan
+
+Scan Arguments:
   --network NETWORK     Network to scan
   --ports PORTS         Ports to scan
   --interval INTERVAL   Scan interval in minutes
+
+Configuration Arguments:
   --db_host DB_HOST     Database Host
   --db_user DB_USER     Database User
   --db_password DB_PASSWORD
@@ -156,16 +164,12 @@ options:
 ```
 For configuration only use 
 ```
-python network_monitor.py --db_host <host> --db_user <user> --db_password <password> --db_name <db name> --venv_path "./venv" --flask_host <flask host> --flask_port <flask port> --flask_debug <True/False> --default_network <network> --default_ports <ports> --default_interval <interval> --spd_test <True/False>
+python network_monitor.py --config --db_host <host> --db_user <user> --db_password <password> --db_name <db name> --venv_path "./venv" --flask_host <flask host> --flask_port <flask port> --flask_debug <True/False> --default_network <network> --default_ports <ports> --default_interval <interval> --spd_test <True/False>
 ```
 For scan use
 ```
-python network_monitor.py --network <network> --ports <ports> --interval <interval>
+python network_monitor.py --scan --network <network> --ports <ports> --interval <interval>
 ```
-
-# DON'T USE THESE ARGS TOGETHER!!!
-## When using configuration args, after the configuration is completed, the process shuts down
-
 
 ---
 
@@ -180,13 +184,17 @@ Response example in `Json` format:
    "up",
    "{\"ports\": [{\"name\": \"ssh\", \"port\": 22, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"http\", \"port\": 80, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"https\", \"port\": 443, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
    "Fri, 08 Nov 2024 07:07:50 GMT"
+   "example1.com",
+   "0f:55:5d:7a:09:06"
  ],
  [
    2,
    "10.10.123.2",
    "up",
    "{\"ports\": [{\"name\": \"ssh\", \"port\": 22, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"http\", \"port\": 80, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"https\", \"port\": 443, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
-   "Fri, 08 Nov 2024 07:07:51 GMT"
+   "Fri, 08 Nov 2024 07:07:51 GMT",
+  "example2.com",
+  "00:15:5d:7b:09:07"
  ]
 ]
 ```
@@ -199,7 +207,9 @@ Response example in `Json` format:
   "10.10.123.1",
   "up",
   "{\"ports\": [{\"name\": \"ssh\", \"port\": 22, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"http\", \"port\": 80, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}, {\"name\": \"https\", \"port\": 443, \"state\": \"closed\", \"product\": \"\", \"version\": \"\"}], \"hostname\": \"\"}",
-  "Fri, 08 Nov 2024 07:07:50 GMT"
+  "Fri, 08 Nov 2024 07:07:50 GMT",
+  "example.com",
+  "00:15:5d:7b:09:06"
 ]
 ```
 
@@ -208,18 +218,6 @@ Response example in `Json` format:
 - ### API documentation - `<ip>:<port(default 5000>/apidocs`
 
 ---
-Tests:
-```
-(venv) PS E:\~Repo\NetworkMonitor> pytest
-================================================== test session starts ==================================================
-platform win32 -- Python 3.11.3, pytest-8.3.3, pluggy-1.5.0
-rootdir: E:\~Repo\NetworkMonitor
-collected 5 items                                                                                                        
-
-test_nm.py .....                                                                                                   [100%]
-
-================================================== 5 passed in 10.06s ===================================================
-```
 
 |                                                links                                                                         |                                 description                                         |
 |:----------------------------------------------------------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------:|
