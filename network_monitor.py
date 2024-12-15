@@ -18,6 +18,7 @@ import argparse
 from art import *
 import importlib
 import speedtest
+from getmac import get_mac_address
 
 #-----------------#
 # Global variables to manage the API process state
@@ -109,7 +110,8 @@ def initialize_database(cursor):
                             status VARCHAR(10),
                             device_info JSON,
                             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
-                            domain VARCHAR(100) DEFAULT 'None'
+                            domain VARCHAR(100) DEFAULT 'None',
+                            mac_address VARCHAR(50) DEFAULT 'None'
                         )
                     """)
                     print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
@@ -245,6 +247,7 @@ def perform_scan(nm, network, ports):
         print(Fore.YELLOW + "[nmap]" + Fore.WHITE + f" Starting scan on network {Fore.GREEN}{network}{Fore.WHITE} with ports {Fore.GREEN}{ports}...")
         # Execute the scan with version detection, specified ports, and a fast timing template
         nm.scan(hosts=network, arguments=f'-sV -p {ports} -T5 --unprivileged', timeout=1200)
+        
         print(Fore.YELLOW + "[nmap]" + Fore.WHITE + " Scan completed.")
         return True     # Return True to indicate the scan was successful
     except Exception as e:
@@ -268,6 +271,16 @@ def process_scan_results(nm, cursor):
         # Retrieve device information and port status as a JSON string
         device_info_json, ports_status_str = get_device_info_json(nm, host)
         print(Fore.YELLOW + "[nmap]" + Fore.WHITE + f" Found device: " + Fore.CYAN + f"{host} | " + Fore.WHITE + f"Ports: [{ports_status_str}" + Fore.WHITE + "]")
+        try:
+            mac_address = get_mac_address(ip=host)
+            if mac_address:
+                print(Fore.YELLOW + "[mac]" + Fore.WHITE + f" Found MAC address {mac_address} for host {host}")
+            else:
+                mac_address = "None"
+                print(Fore.YELLOW + "[mac]" + Fore.WHITE + f" No MAC address found for host {host}")
+        except Exception as e:
+            print(Fore.RED + "[mac]" + Fore.WHITE + f" Error getting MAC address: {e}")
+
         try:    
             addr = socket.gethostbyaddr(host)
             address = addr[0]
@@ -286,10 +299,10 @@ def process_scan_results(nm, cursor):
 
         # If the device exists in the database, update its information
         if result:
-            update_device_info(cursor, status, device_info_json, host, result[0], address)
+            update_device_info(cursor, status, device_info_json, host, result[0], address, mac_address)
         # If the device does not exist, insert new device information
         else:
-            insert_device_info(cursor, status, device_info_json, host, address)
+            insert_device_info(cursor, status, device_info_json, host, address, mac_address)
 
         found_hosts.add(host)           # Add the host to the set of found hosts
 
@@ -300,7 +313,6 @@ def process_scan_results(nm, cursor):
 #-----------------#
 # Collects device information and returns it as a JSON string.
 def get_device_info_json(nm, host):
-
     # Initialize a dictionary to store device information
     device_info = {
         'hostname': nm[host].hostname(),    # Get the hostname of the device
@@ -331,7 +343,7 @@ def get_device_info_json(nm, host):
             elif port_info['state'] == 'filtered':
                 ports_status.append(Fore.YELLOW + str(port))    # Open ports in green
             elif port_info['state'] == 'closed':
-                ports_status.append(Fore.RED + str(port))       # Closed ports in red
+                ports_status.append(Fore.RED + str(port))       # Closed portsprocess_scan_data in red
     
     ports_status_str = ','.join(ports_status)           # Join the port status list into a single string
 
@@ -339,14 +351,14 @@ def get_device_info_json(nm, host):
 
 #-----------------#
 # Updates existing device information in the database if it has changed.
-def update_device_info(cursor, status, device_info_json, host, existing_info, address):
+def update_device_info(cursor, status, device_info_json, host, existing_info, address, mac_address):
     # Check if the existing device information is different from the new information
     if existing_info != device_info_json:
         # Execute an SQL UPDATE statement to update the device's status and information in the database
         try:
             cursor.execute(
-                "UPDATE scans SET status = %s, device_info = %s, timestamp = CURRENT_TIMESTAMP, domain = %s WHERE ip = %s",
-                (status, device_info_json, address, host)    # Parameters for the SQL query
+                "UPDATE scans SET status = %s, device_info = %s, timestamp = CURRENT_TIMESTAMP, domain = %s, mac_address = %s WHERE ip = %s",
+                (status, device_info_json, address, mac_address, host)    # Parameters for the SQL query
             )
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Updated information about " + Fore.GREEN + f"{host}")
             cursor.connection.commit()
@@ -356,12 +368,12 @@ def update_device_info(cursor, status, device_info_json, host, existing_info, ad
 
 #-----------------#
 # Inserts new device information into the database.
-def insert_device_info(cursor, status, device_info_json, host, address):
+def insert_device_info(cursor, status, device_info_json, host, address, mac_address):
     # Execute an SQL INSERT statement to add a new device's information to the database
     try:
         cursor.execute(
-            "INSERT INTO scans (ip, status, device_info, domain) VALUES (%s, %s, %s, %s)",
-            (host, status, device_info_json, address)        # Parameters for the SQL query
+            "INSERT INTO scans (ip, status, device_info, domain, mac_address) VALUES (%s, %s, %s, %s, %s)",
+            (host, status, device_info_json, address, mac_address)        # Parameters for the SQL query
         )
         print(Fore.YELLOW + "[db]" + Fore.WHITE + " Inserted information about " + Fore.GREEN + f"{host}")
         cursor.connection.commit()
@@ -442,7 +454,7 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         "VENV": {
             "PATH": venv_path,
             "API_KEY": api_key,
-            "VERSION": "1.1.1"
+            "VERSION": VENV["VERSION"]
         },
         "FLASK_CONFIG": {
             "HOST": flask_host,
@@ -468,7 +480,7 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         config_file.write("FLASK_CONFIG = ")
         config_file.write(f"{{'HOST': '{flask_host}', 'PORT': {flask_port}, 'DEBUG': {str(flask_debug).capitalize()}}}\n")  # Write FLASK_CONFIG section
         config_file.write("\nSCAN_CONFIG = ")
-        config_file.write(f"{{\n    'DEFAULT_NETWORK': '{default_network}',\n    'DEFAULT_PORTS': '{default_ports}',\n  'DEFAULT_INTERVAL': {default_interval},\n   'SPD_TEST': {str(spd_test).capitalize()}\n}}\n")
+        config_file.write(f"{{\n    'DEFAULT_NETWORK': '{default_network}',\n   'DEFAULT_PORTS': '{default_ports}',\n   'DEFAULT_INTERVAL': {default_interval},\n   'SPD_TEST': {str(spd_test).capitalize()}\n}}\n")
         
         # config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))     # Write SCAN_CONFIG section
 
@@ -484,7 +496,9 @@ def generate_api_key():
     random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
     api_key_string = f".netmonitor_{random_number}_config."  # Form the string for the key
     api_key = hashlib.md5(api_key_string.encode()).hexdigest()  # Calculate the MD5 hash
+    print(Fore.CYAN + "=============================================================" + Fore.WHITE)
     print(Fore.GREEN + "[API Key]" + Fore.WHITE + " Generated API Key: " + Fore.CYAN + f"{api_key}" + Fore.WHITE)
+    print(Fore.CYAN + "============================================================="  + Fore.WHITE)
 
     # Load the existing config.py
     config_data = {}
@@ -512,64 +526,52 @@ def generate_api_key():
 
     print(Fore.GREEN + "[Config]" + Fore.WHITE + " API Key saved to config.py.")
 
-#-----------------#
-# Main execution block to handle user input and initiate scanning or configuration.
 if __name__ == "__main__":
     # Creating a Command Line Argument parser
-    parser = argparse.ArgumentParser(description='Network Monitor')
-    parser.add_argument('--network', type=str, help='Network to scan')
-    parser.add_argument('--ports', type=str, help='Ports to scan')
-    parser.add_argument('--interval', type=float, help='Scan interval in minutes')
+    parser = argparse.ArgumentParser(description=f'Network Monitor v{VENV["VERSION"]}')
+    
+    # Adding mutually exclusive group for scan and config
+    exclusive_group = parser.add_mutually_exclusive_group(required=False)
+    exclusive_group.add_argument('--config', action='store_true', help='Run configuration')
+    exclusive_group.add_argument('--scan', action='store_true', help='Run scan')
 
-    # Configuration args
-    parser.add_argument('--db_host', type=str, help='Database Host')
-    parser.add_argument('--db_user', type=str, help='Database User')
-    parser.add_argument('--db_password', type=str, help='Database Password')
-    parser.add_argument('--db_name', type=str, help='Database Name')
-    parser.add_argument('--venv_path', type=str, help='Virtual Environment Path')
-    parser.add_argument('--flask_host', type=str, help='Flask Host')
-    parser.add_argument('--flask_port', type=int, help='Flask Port')
-    parser.add_argument('--flask_debug', type=bool, help='Flask Debug (True/False)')
-    parser.add_argument('--default_network', type=str, help='Default Network')
-    parser.add_argument('--default_ports', type=str, help='Default ports')
-    parser.add_argument('--default_interval', type=float, help='Default interval')
-    parser.add_argument('--spd_test', type=bool, help='Speedtest before scan')
+    # Group for scan arguments
+    scan_group = parser.add_argument_group('Scan Arguments')
+    scan_group.add_argument('--network', type=str, help='Network to scan')
+    scan_group.add_argument('--ports', type=str, help='Ports to scan')
+    scan_group.add_argument('--interval', type=float, help='Scan interval in minutes')
+
+    # Group for configuration arguments
+    config_group = parser.add_argument_group('Configuration Arguments')
+    config_group.add_argument('--db_host', type=str, help='Database Host')
+    config_group.add_argument('--db_user', type=str, help='Database User')
+    config_group.add_argument('--db_password', type=str, help='Database Password')
+    config_group.add_argument('--db_name', type=str, help='Database Name')
+    config_group.add_argument('--venv_path', type=str, help='Virtual Environment Path')
+    config_group.add_argument('--flask_host', type=str, help='Flask Host')
+    config_group.add_argument('--flask_port', type=int, help='Flask Port')
+    config_group.add_argument('--flask_debug', type=bool, help='Flask Debug (True/False)')
+    config_group.add_argument('--default_network', type=str, help='Default Network')
+    config_group.add_argument('--default_ports', type=str, help='Default ports')
+    config_group.add_argument('--default_interval', type=float, help='Default interval')
+    config_group.add_argument('--spd_test', type=bool, help='Speedtest before scan')
+
 
     # Parsing arguments
     args = parser.parse_args()
 
-    # If the parameters are set, run the scan
-    if args.network and args.ports and args.interval:
-        print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting scan with provided parameters...")
-        start_api()  # Launching the API
-        try:
-            # Use a database connection to initialize the database and table
-            try:
-                with DatabaseConnection() as cursor:
-                    importlib.reload(config)
-                    DB_CONFIG = config.DB_CONFIG
-                    VENV = config.VENV
-                    FLASK_CONFIG = config.FLASK_CONFIG
-                    SCAN_CONFIG = config.SCAN_CONFIG
-                    initialize_database(cursor)  # Initialize the database and table                    
-            except pymysql.err.OperationalError as e:
-                print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
-            if SCAN_CONFIG["SPD_TEST"]:
-                print(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
-                spd_test()
-                        
-            while True:
-                scan_network(args.network, args.ports)  # Performing a network scan
-                wait_time = args.interval * 60  # We calculate the waiting time in seconds
-                if args.interval < 1:
-                    print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
-                else:
-                    print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
-                time.sleep(wait_time)  # Waiting for the specified time before the next scan
-        except KeyboardInterrupt:
-            print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
-            terminate_api()  # Completing the API process if it is running
-    elif args.db_host or args.db_user or args.db_password or args.db_name or args.venv_path or args.flask_host or args.flask_port or args.flask_debug or args.spd_test:
+    # Check for mutually exclusive arguments
+    if args.config and args.scan:
+        print(Fore.RED + "[Error]" + Fore.WHITE + " You cannot use --config and --scan together.")
+        exit(1)
+
+    # If configuration arguments are provided
+    if args.config:
+        # Check if all required configuration arguments are provided
+        if not all([args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug]):
+            print(Fore.RED + "[Error]" + Fore.WHITE + " Missing required configuration arguments.")
+            exit(1)
+
         logo = text2art(
             '''NetworkMonitor
             by DekimDev''', "colossal"
@@ -581,7 +583,10 @@ if __name__ == "__main__":
         print("")
         print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting configuration with provided parameters...")
         try:
-            configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval, args.spd_test)
+            # Ensure SPD_TEST is capitalized
+            spd_test_value = str(args.spd_test).capitalize() if args.spd_test is not None else None
+            
+            configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval, spd_test_value)
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Creating database if not exist...")
             with DatabaseConnection() as cursor:
                 importlib.reload(config)
@@ -596,9 +601,46 @@ if __name__ == "__main__":
             print(Fore.RED + "[Error]" + Fore.WHITE + f" An error occurred during configuration: {e}")
             print(Fore.RED + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 1")
             exit(1)
-        print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
-        exit(0)
-    else:
+
+    # If scan arguments are provided
+    if args.scan:
+        # Check if all required scan arguments are provided
+        if not all([args.network, args.ports, args.interval]):
+            print(Fore.RED + "[Error]" + Fore.WHITE + " Missing required scan arguments.")
+            exit(1)
+
+        print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting scan with provided parameters...")
+        start_api()  # Launching the API
+        try:
+            # Use a database connection to initialize the database and table
+            try:
+                if SCAN_CONFIG["SPD_TEST"]:
+                    print(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
+                    spd_test()
+                with DatabaseConnection() as cursor:
+                    importlib.reload(config)
+                    DB_CONFIG = config.DB_CONFIG
+                    VENV = config.VENV
+                    FLASK_CONFIG = config.FLASK_CONFIG
+                    SCAN_CONFIG = config.SCAN_CONFIG
+                    initialize_database(cursor)  # Initialize the database and table                    
+            except pymysql.err.OperationalError as e:
+                print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
+                        
+            while True:
+                scan_network(args.network, args.ports)  # Performing a network scan
+                wait_time = args.interval * 60  # We calculate the waiting time in seconds
+                if args.interval < 1:
+                    print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
+                else:
+                    print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
+                time.sleep(wait_time)  # Waiting for the specified time before the next scan
+        except KeyboardInterrupt:
+            print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
+            terminate_api()  # Completing the API process if it is running
+
+    # Handle case where no valid arguments are provided
+    if not args.config and not args.scan:
         # Start of the main program execution
         try:
             logo = text2art(
@@ -613,7 +655,7 @@ if __name__ == "__main__":
             # Infinite loop to continuously prompt the user for an action
             while True:
                 # Get user input for choosing an option (configure or scan)
-                choice = get_user_input("Choose an option:\n" + Fore.GREEN + "1. " + Fore.WHITE + "Configure\n" + Fore.GREEN + "2. " + Fore.WHITE + "Scan\n" + Fore.GREEN + "3. " + Fore.WHITE + "Generate/Regenerate API Key\nEnter your choice: ", "2")
+                choice = get_user_input("Choose an option:\n" + Fore.GREEN + "1. " + Fore.WHITE + "Configure\n" + Fore.GREEN + "2. " + Fore.WHITE + "Scan\n" + Fore.GREEN + "3. " + Fore.WHITE + "Generate/Regenerate API Key\n" + Fore.GREEN + "4. " + Fore.WHITE + "SpeedTest\nEnter your choice: ", "2")
                 if choice is None:
                     break                   # Exit the loop if no choice is made
                 # If the user chooses to configure settings
@@ -652,6 +694,11 @@ if __name__ == "__main__":
                         terminate_api()                         # Terminate the API process if running
                 elif choice == "3":
                     generate_api_key()
+                elif choice == "4":
+                    print(Fore.YELLOW + "============================================" + Fore.WHITE)
+                    print(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
+                    spd_test()
+                    print(Fore.YELLOW + "============================================" + Fore.WHITE)
                 else:
                     # Handle invalid user input
                     print(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1 or 2.")

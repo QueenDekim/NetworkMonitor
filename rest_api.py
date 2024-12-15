@@ -223,7 +223,9 @@ def get_scans():
                     - type: string
                       example: "Sat, 30 Nov 2024 12:29:20 GMT"
                     - type: string
-                      example: "None"
+                      example: "example.com"
+                    - type: string
+                      example: "00:15:5d:7b:09:06"
       404:
         description: Not found
       500:
@@ -262,7 +264,9 @@ def get_scan_by_ip(ip):
                 - type: string
                   example: "Sat, 30 Nov 2024 12:29:20 GMT"
                 - type: string
-                  example: "None"
+                  example: "example.com"
+                - type: string
+                  example: "00:15:5d:7b:09:06"
       404:
         description: Not found
       500:
@@ -311,6 +315,9 @@ def create_or_update_scan():
                     - type: string
                       description: "Domain name"
                       example: "example.com"
+                    - type: string
+                      description: "Mac Address"
+                      example: "00:15:5d:7b:09:06"
                 
     responses:
       201:
