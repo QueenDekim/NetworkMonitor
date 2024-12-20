@@ -35,6 +35,8 @@ class DatabaseConnection:
         self.cursor = None
 
     def __enter__(self):
+        importlib.reload(config)
+        DB_CONFIG = config.DB_CONFIG
         # Establishes a database connection and returns the cursor for executing queries.
         try:
             # Create a new database connection using pymysql
