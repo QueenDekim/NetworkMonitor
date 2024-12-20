@@ -1,0 +1,148 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Monitor</title>
+    <style>
+        .host {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .up { background-color: #d4edda; }
+        .down { background-color: #f8d7da; }
+        .port-status {
+            display: block; /* Убедитесь, что блок отображается */
+            background-color: #f0f0f0; /* Добавьте фон для видимости */
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc; /* Добавьте границу для видимости */
+        }
+    </style>
+</head>
+<body>
+    <h1>Список Хостов</h1>
+    <div id="hosts"></div>
+    <!-- <button id="loadMore">Загрузить еще</button> -->
+    <div id="pagination">
+        <button id="prevPage" onclick="changePage(currentPage - 1)">Назад</button>
+        <span id="pageInfo">Страница 1</span>
+        <button id="nextPage" onclick="changePage(currentPage + 1)">Вперед</button>
+    </div>
+
+    <script>
+        let currentPage = 1;
+
+        function fetchHosts(page) {
+            fetch(`/api/scans/page/${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    const hostsDiv = document.getElementById('hosts');
+                    data.forEach(host => {
+                        const hostDiv = document.createElement('div');
+                        hostDiv.className = `host ${host[2] === 'up' ? 'up' : 'down'}`;
+                        hostDiv.innerHTML = `${host[1]} - ${host[2]}`;
+                        hostDiv.onclick = () => fetchPorts(host[1], hostDiv);
+                        hostsDiv.appendChild(hostDiv);
+                    });
+                });
+        }
+
+        function fetchPorts(ip, hostDiv) {
+            console.log(`Запрос информации о портах для IP: ${ip}`); // Отладочное сообщение
+            fetch(`/api/scans/ports/${ip}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(ports => {
+                    console.log('Полученные порты:', ports); // Отладочное сообщение
+                    
+                    // Проверяем, существует ли уже блок с информацией о портах
+                    let portStatusDiv = hostDiv.querySelector('.port-status');
+                    if (!portStatusDiv) {
+                        portStatusDiv = document.createElement('div');
+                        portStatusDiv.className = 'port-status';
+                        hostDiv.appendChild(portStatusDiv);
+                    } else {
+                        // Если блок уже существует, очищаем его содержимое
+                        portStatusDiv.innerHTML = '';
+                    }
+
+                    // Проверяем, есть ли порты
+                    if (ports.length === 0) {
+                        portStatusDiv.innerHTML = 'Нет информации о портах.';
+                    } else {
+                        ports.forEach(port => {
+                            const portDiv = document.createElement('div');
+                            portDiv.innerHTML = `Порт ${port.port}: <span class="${port.state}">${port.state}</span>`;
+                            portStatusDiv.appendChild(portDiv);
+                        });
+                    }
+
+                    // Переключаем видимость блока
+                    if (portStatusDiv.style.display === 'block') {
+                        portStatusDiv.style.display = 'none'; // Скрываем, если он уже виден
+                    } else {
+                        portStatusDiv.style.display = 'block'; // Показываем, если он скрыт
+                    }
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        }
+
+        document.getElementById('loadMore').onclick = () => {
+            currentPage++;
+            fetchHosts(currentPage);
+        };
+
+        function changePage(page) {
+            if (page < 1) return; // Не позволяем перейти на страницу меньше 1
+            currentPage = page;
+            fetchHosts(currentPage);
+        }
+
+        function fetchHosts(page) {
+            console.log(`Запрос хостов для страницы: ${page}`); // Отладочное сообщение
+            fetch(`/api/scans/page/${page}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Полученные хосты:', data); // Отладочное сообщение
+                    const hostsDiv = document.getElementById('hosts');
+                    hostsDiv.innerHTML = ''; // Очищаем предыдущие хосты
+
+                    data.forEach(host => {
+                        const hostDiv = document.createElement('div');
+                        hostDiv.className = `host ${host[2] === 'up' ? 'up' : 'down'}`;
+                        hostDiv.innerHTML = `${host[1]} - ${host[2]}`;
+                        hostDiv.onclick = () => fetchPorts(host[1], hostDiv);
+                        hostsDiv.appendChild(hostDiv);
+                    });
+
+                    // Обновляем информацию о текущей странице
+                    document.getElementById('pageInfo').innerText = `Страница ${currentPage}`;
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        }
+        // Начальная загрузка хостов
+        // fetchHosts(1);
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchHosts(1); // Загружаем первую страницу хостов
+        });
+    </script>
+</body>
+</html>

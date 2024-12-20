@@ -1,6 +1,6 @@
 #-----------------#
 # Imported modules
-from flask import Flask, request, jsonify, send_from_directory   # Import Flask framework and related functions for building web applications
+from flask import Flask, request, jsonify, send_from_directory, render_template   # Import Flask framework and related functions for building web applications
 import pymysql                                          # Import pymysql for connecting to and interacting with MySQL databases
 from config import DB_CONFIG, FLASK_CONFIG, VENV              # Import database and Flask configuration settings from the config module
 import os                                               # Import os for interacting with the operating system (e.g., file paths, environment variables)
@@ -78,6 +78,22 @@ def update_or_create_scan(scan_data):
     except Exception as e:
         print(f"Error: {e}")
         return False
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_ports_by_ip(ip):
+    conn = connect_to_db()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT device_info FROM scans WHERE ip = %s", (ip,))
+        row = cursor.fetchone()
+        if row:
+            return json.loads(row[0])['ports']  # Предполагается, что device_info хранит JSON
+        return None
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
     finally:
         cursor.close()
         conn.close()
@@ -197,6 +213,101 @@ def terms_of_service():
         </body>
     </html>
     '''
+
+# @app.route('/web')
+# def web_interface():
+#     return render_template('index.html')
+
+@app.route('/api/scans/ports/<string:ip>', methods=['GET'])
+def get_ports(ip):
+    """
+    Get port information by IP address
+    ---
+    parameters:
+      - name: ip
+        in: path
+        type: string
+        required: true
+        description: The IP address to retrieve port information for
+    responses:
+      200:
+        description: A list of ports for the specified IP address
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              port:
+                type: integer
+                example: 22
+              state:
+                type: string
+                example: "open"
+              name:
+                type: string
+                example: "ssh"
+              product:
+                type: string
+                example: "OpenSSH"
+              version:
+                type: string
+                example: "6.6.0"
+      404:
+        description: Not found
+      500:
+        description: Internal server error
+    """
+    ports = get_ports_by_ip(ip)
+    if ports is not None:
+        return jsonify(ports)
+    else:
+        return jsonify({"error": "Not found"}), 404
+    
+@app.route('/api/scans/page/<int:page>', methods=['GET'])
+def get_scans_paginated(page):
+    """
+    Get paginated scan data
+    ---
+    parameters:
+      - name: page
+        in: path
+        type: integer
+        required: true
+        description: The page number to retrieve
+    responses:
+      200:
+        description: A list of scans for the specified page
+        schema:
+          type: array
+          items:
+            type: array
+            items:
+              oneOf:
+                - type: integer
+                  example: 1
+                - type: string
+                  example: "192.168.0.1"
+                - type: string
+                  example: "up"
+                - type: string
+                  example: '{"ports": [{"name": "ssh", "port": 22, "state": "open", "product": "OpenSSH", "version": "6.6.0"}, {"name": "http", "port": 80, "state": "open", "product": "TP-LINK router http config", "version": ""}, {"name": "https", "port": 443, "state": "open", "product": "", "version": ""}], "hostname": "TPLINK"}'
+                - type: string
+                  example: "Sat, 30 Nov 2024 12:29:20 GMT"
+                - type: string
+                  example: "example.com"
+                - type: string
+                  example: "00:15:5d:7b:09:06"
+      404:
+        description: Not found
+      500:
+        description: Internal server error
+    """
+    data = get_scan_data()  # Получаем все данные
+    per_page = 10  # Количество хостов на странице
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated_data = data[start:end]  # Пагинация данных
+    return jsonify(paginated_data)
 
 @app.route('/api/scans', methods=['GET'])   # Define the route for the API endpoint to get scan data, allowing only GET requests
 def get_scans():
