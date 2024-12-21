@@ -5,8 +5,8 @@ import pymysql                                                      # Import pym
 import json                                                         # Import json for working with JSON data
 import time                                                         # Import time for time-related functions
 from colorama import Fore                                           # Import Fore from colorama for colored terminal text
-import app.config as config
-from app.config import DB_CONFIG, VENV, FLASK_CONFIG, SCAN_CONFIG       # Import configuration settings from the config module
+import config as config
+from config import DB_CONFIG, VENV, FLASK_CONFIG, SCAN_CONFIG       # Import configuration settings from the config module
 import subprocess                                                   # Import subprocess for executing shell commands
 import os                                                           # Import os for operating system dependent functionality
 import sys
