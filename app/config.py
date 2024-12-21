@@ -8,7 +8,7 @@ DB_CONFIG = {
 VENV = {
     "PATH": "..\\venv",
     "API_KEY": "",
-    "VERSION": "1.1.3"
+    "VERSION": "1.1.4"
 }
 
 FLASK_CONFIG = {'HOST': '0.0.0.0', 'PORT': 5000, 'DEBUG': True}
