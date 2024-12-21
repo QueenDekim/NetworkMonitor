@@ -302,11 +302,11 @@ def get_scans_paginated(page):
       500:
         description: Internal server error
     """
-    data = get_scan_data()  # Получаем все данные
-    per_page = 10  # Количество хостов на странице
+    data = get_scan_data()  # Get all data
+    per_page = 10  # Host count on page
     start = (page - 1) * per_page
     end = start + per_page
-    paginated_data = data[start:end]  # Пагинация данных
+    paginated_data = data[start:end]  # Data pagination
     return jsonify(paginated_data)
 
 @app.route('/api/scans', methods=['GET'])   # Define the route for the API endpoint to get scan data, allowing only GET requests
