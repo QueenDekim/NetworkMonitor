@@ -165,7 +165,7 @@ Configuration Arguments:
 ```
 For configuration only use 
 ```
-python network_monitor.py --config --db_host <host> --db_user <user> --db_password <password> --db_name <db name> --venv_path "./venv" --flask_host <flask host> --flask_port <flask port> --flask_debug <True/False> --default_network <network> --default_ports <ports> --default_interval <interval> --spd_test <True/False>
+python network_monitor.py --config --db_host <host> --db_user <user> --db_password <password> --db_name <db name> --flask_host <flask host> --flask_port <flask port> --flask_debug <True/False> --default_network <network> --default_ports <ports> --default_interval <interval> --spd_test <True/False>
 ```
 For scan use
 ```
