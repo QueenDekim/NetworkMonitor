@@ -1,3 +1,5 @@
+import os
+
 DB_CONFIG = {
     "host": "db",
     "user": "root",
@@ -6,7 +8,7 @@ DB_CONFIG = {
 }
 
 VENV = {
-    "PATH": ".\\venv",
+    "PATH": os.path.join(".", "venv"),
     "API_KEY": "",
     "VERSION": "1.1.4"
 }

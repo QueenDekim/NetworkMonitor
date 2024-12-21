@@ -188,23 +188,19 @@ def start_api():
             python_executable = os.path.join(VENV['PATH'], 'Scripts', 'python.exe')
         else:
             python_executable = os.path.join(VENV['PATH'], 'bin', 'python')
-
-        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'rest_api.py'))
-
-        if not os.path.isfile(script_path):
-            print(f"Файл не найден: {script_path}")
-        else:
-            # Open a null device to suppress output
-            with open(os.devnull, 'w') as devnull:
-                # Start the REST API as a subprocess, redirecting stdout and stderr to devnull
-                process = subprocess.Popen([python_executable, script_path], stdout=devnull, stderr=devnull)
-                print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API started at " + Fore.CYAN + f"http://{FLASK_CONFIG['HOST']}:{FLASK_CONFIG['PORT']}" + Fore.WHITE)
-            api_started = True      # Set the api_started flag to True indicating the API has started
-            return 0
+        
+        # Open a null device to suppress output
+        with open(os.devnull, 'w') as devnull:
+            # Start the REST API as a subprocess, redirecting stdout and stderr to devnull
+            process = subprocess.Popen([python_executable, 'app/rest_api.py'], stdout=devnull, stderr=devnull)
+            print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API started at " + Fore.CYAN + f"http://{FLASK_CONFIG['HOST']}:{FLASK_CONFIG['PORT']}" + Fore.WHITE)
+        api_started = True      # Set the api_started flag to True indicating the API has started
+        return 0
     except Exception as e:
         print(Fore.RED + "[ERR]" + Fore.WHITE + f" Failed to start 'rest_api.py'. {e}")
         api_started = False     # Set the api_started flag to False indicating the API did not start
         return 1
+    
 #-----------------#
 # Helper function to prompt the user for input with exception handling.
 def get_user_input(prompt, default_value=None):
@@ -432,7 +428,7 @@ def update_device_status(cursor, found_hosts):
 
 #-----------------#
 # Configures database and other settings based on user input.
-def configure_settings(db_host=None, db_user=None, db_password=None, db_name=None, venv_path=None, flask_host=None, flask_port=None, flask_debug=None, default_network=None, default_ports=None, default_interval=None, spd_test=None):
+def configure_settings(db_host=None, db_user=None, db_password=None, db_name=None, flask_host=None, flask_port=None, flask_debug=None, default_network=None, default_ports=None, default_interval=None, spd_test=None):
     
 
     random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
@@ -449,8 +445,6 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         db_password = getpass.getpass("Database Password (default: mysecretpassword): ") or "mysecretpassword"
     if db_name is None:
         db_name = get_user_input(f"Database Name (default: {DB_CONFIG['database']}): ", f"{DB_CONFIG['database']}")
-    if venv_path is None:
-        venv_path = get_user_input(f"Virtual Environment Path (default: {VENV['PATH']}): ", f"{VENV['PATH']}")
     if flask_host is None:
         flask_host = get_user_input(f"Flask Host (default: {FLASK_CONFIG['HOST']}): ", f"{FLASK_CONFIG['HOST']}")
     if flask_port is None:
@@ -480,7 +474,7 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
             "database": db_name
         },
         "VENV": {
-            "PATH": venv_path,
+            "PATH": VENV["PATH"],
             "API_KEY": api_key,
             "VERSION": VENV["VERSION"]
         },
@@ -575,7 +569,6 @@ if __name__ == "__main__":
     config_group.add_argument('--db_user', type=str, help='Database User')
     config_group.add_argument('--db_password', type=str, help='Database Password')
     config_group.add_argument('--db_name', type=str, help='Database Name')
-    config_group.add_argument('--venv_path', type=str, help='Virtual Environment Path')
     config_group.add_argument('--flask_host', type=str, help='Flask Host')
     config_group.add_argument('--flask_port', type=int, help='Flask Port')
     config_group.add_argument('--flask_debug', type=bool, help='Flask Debug (True/False)')
