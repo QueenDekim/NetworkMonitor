@@ -589,7 +589,7 @@ if __name__ == "__main__":
     # If configuration arguments are provided
     if args.config:
         # Check if all required configuration arguments are provided
-        if not all([args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug]):
+        if not all([args.db_host, args.db_user, args.db_password, args.db_name, args.flask_host, args.flask_port, args.flask_debug]):
             print(Fore.RED + "[Error]" + Fore.WHITE + " Missing required configuration arguments.")
             exit(1)
 
@@ -607,7 +607,7 @@ if __name__ == "__main__":
             # Ensure SPD_TEST is capitalized
             spd_test_value = str(args.spd_test).capitalize() if args.spd_test is not None else None
             
-            configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.venv_path, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval, spd_test_value)
+            configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval, spd_test_value)
             print(Fore.YELLOW + "[db]" + Fore.WHITE + " Creating database if not exist...")
             with DatabaseConnection() as cursor:
                 importlib.reload(config)
