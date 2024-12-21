@@ -11,14 +11,14 @@ import subprocess                                                   # Import sub
 import os                                                           # Import os for operating system dependent functionality
 import sys
 import getpass                                                      # Import getpass for securely getting user passwords without echoing
-import socket
-import random
-import hashlib
-import argparse
-from art import *
-import importlib
-import speedtest
-from getmac import get_mac_address
+import socket                                                       # Import the socket library for network communication
+import random                                                       # Import the random library for generating random numbers
+import hashlib                                                      # Import the hashlib library for hashing (e.g., generating MD5 hashes)
+import argparse                                                     # Import argparse for parsing command-line arguments
+from art import *                                                   # Import everything from the art library for ASCII art generation
+import importlib                                                    # Import importlib for importing modules dynamically
+import speedtest                                                    # Import the speedtest library for testing internet speed
+from getmac import get_mac_address                                  # Import get_mac_address to retrieve MAC addresses of devices
 
 #-----------------#
 # Global variables to manage the API process state
@@ -54,13 +54,13 @@ class DatabaseConnection:
                 return self.cursor      # Return the cursor for use in the with statement
         except pymysql.err.OperationalError as e:
             print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
-            return None  # Return None to indicate the connection failed
+            return None                 # Return None to indicate the connection failed
         except UnicodeEncodeError:
             # Handle the case where the password cannot be encoded
             print(Fore.RED + "[db]" + Fore.WHITE + " Error: unable to encode password")
         except Exception as e:
             print(Fore.RED + "[db]" + Fore.WHITE + f" An error occurred: {e}")
-            return None  # Return None to indicate the connection failed
+            return None                 # Return None to indicate the connection failed
 
     def __exit__(self, exc_type, exc_value, traceback):
         # Closes the database connection and cursor when exiting the context.
@@ -131,28 +131,41 @@ def initialize_database(cursor):
 #-----------------#
 # Speedtest.
 def spd_test():
+    # Perform a speed test to measure download and upload speeds, as well as ping.
     try:
-        st = speedtest.Speedtest()
+        st = speedtest.Speedtest()  # Create an instance of the Speedtest class
 
-        ds = st.download()
-        us = st.upload()
-        st.get_servers([])
-        ping = st.results.ping
+        ds = st.download()          # Measure download speed
+        us = st.upload()            # Measure upload speed
+        st.get_servers([])          # Retrieve the list of servers (empty list means use default)
+        ping = st.results.ping      # Get the ping result
 
-        print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Download speed: {humansize(ds)}")
-        print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Upload speed: {humansize(us)}")
-        print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Ping: {ping} ms")
+        print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Download speed: {humansize(ds)}")    # Print the download speed in a human-readable format
+        print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Upload speed: {humansize(us)}")      # Print the upload speed in a human-readable format
+        print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Ping: {ping} ms")                    # Print the ping result in milliseconds
     except Exception as e:
-        print(Fore.RED + "[Speedtest]" + Fore.WHITE + f" Error: {e}")
+        print(Fore.RED + "[Speedtest]" + Fore.WHITE + f" Error: {e}")                           # Print an error message if an exception occurs during the speed test
 
 def humansize(nbytes):
-    suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
-    i = 0
-    while nbytes >= 1024 and i < len(suffixes)-1:
-        nbytes /= 1024.
-        i += 1
-    f = ('%.2f' % nbytes).rstrip('0').rstrip('.')
-    return '%s %s' % (f, suffixes[i])
+    """
+    Convert a number of bytes into a human-readable format (e.g., KB, MB, GB).
+    
+    Parameters:
+        nbytes (int): The number of bytes to convert.
+    
+    Returns:
+        str: A string representing the size in a human-readable format.
+    """
+
+    suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']  # List of size suffixes
+    i = 0                                           # Initialize index for suffixes
+    # Loop to divide the number of bytes by 1024 until it is less than 1024
+    while nbytes >= 1024 and i < len(suffixes) - 1:
+        nbytes /= 1024.0                            # Divide by 1024 to convert to the next size
+        i += 1                                      # Increment the index for the suffixes
+    
+    f = ('%.2f' % nbytes).rstrip('0').rstrip('.')   # Format the number to two decimal places and remove trailing zeros
+    return '%s %s' % (f, suffixes[i])               # Return the formatted size with the appropriate suffix
 
 
 #-----------------#
@@ -709,4 +722,4 @@ if __name__ == "__main__":
             print("\nProgram interrupted by user. Exiting...")
         finally:
             # Ensure the API process is terminated when exiting the program
-            terminate_api()                                     # Terminate the API process if running
+            terminate_api()     # Terminate the API process if running
