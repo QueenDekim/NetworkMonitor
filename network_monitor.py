@@ -670,7 +670,7 @@ if __name__ == "__main__":
             # Infinite loop to continuously prompt the user for an action
             while True:
                 # Get user input for choosing an option (configure or scan)
-                choice = get_user_input("Choose an option:\n" + Fore.GREEN + "1. " + Fore.WHITE + "Configure\n" + Fore.GREEN + "2. " + Fore.WHITE + "Scan\n" + Fore.GREEN + "3. " + Fore.WHITE + "Generate/Regenerate API Key\n" + Fore.GREEN + "4. " + Fore.WHITE + "SpeedTest\nEnter your choice: ", "2")
+                choice = get_user_input("Choose an option:\n" + Fore.GREEN + "1. " + Fore.WHITE + "Configure\n" + Fore.GREEN + "2. " + Fore.WHITE + "Scan\n" + Fore.GREEN + "3. " + Fore.WHITE + "Generate/Regenerate API Key\n" + Fore.GREEN + "4. " + Fore.WHITE + "SpeedTest\n" + Fore.GREEN + "5. " + Fore.WHITE + "Exit\nEnter your choice: ", "2")
                 if choice is None:
                     break                   # Exit the loop if no choice is made
                 # If the user chooses to configure settings
@@ -714,9 +714,12 @@ if __name__ == "__main__":
                     print(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
                     spd_test()
                     print(Fore.YELLOW + "============================================" + Fore.WHITE)
+                elif choice == "5":
+                    print(Fore.YELLOW + "Exiting..." + Fore.WHITE)
+                    exit()
                 else:
                     # Handle invalid user input
-                    print(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1 or 2.")
+                    print(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1-5.")
         except KeyboardInterrupt:
             # Handle the case where the program is interrupted by the user
             print("\nProgram interrupted by user. Exiting...")
