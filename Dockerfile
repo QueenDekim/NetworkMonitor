@@ -9,9 +9,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /
 
 # Копирование файлов в контейнер
-COPY . /
-# COPY requirements.txt ./
-# COPY base.sql ./
+COPY requirements.txt ./
+COPY base.sql ./
 COPY wait-for-it.sh /usr/bin/wait-for-it.sh
 RUN chmod +x /usr/bin/wait-for-it.sh
 
@@ -25,7 +24,7 @@ RUN . venv/bin/activate && pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Копирование всего содержимого приложения
-# COPY ./app ./app
+COPY app ./app
 
 # Установка переменных окружения
 ENV NETWORK="192.168.1.0/24"
@@ -41,4 +40,4 @@ ENV FLASK_DEBUG="True"
 ENV SPD_TEST="True"
 
 # Команда запуска приложения
-CMD ["/bin/bash", "-c", "ls / && echo \"Waiting db...\" && /usr/bin/wait-for-it.sh db:3306 -- && . venv/bin/activate && python ./app/network_monitor.py --config --db_host $DB_HOST --db_user $DB_USER --db_password $DB_PASSWORD --db_name $DB_NAME --venv_path \"./venv\" --flask_host $FLASK_HOST --flask_port $FLASK_PORT --flask_debug $FLASK_DEBUG --default_network $NETWORK --default_ports $PORTS --default_interval $INTERVAL --spd_test $SPD_TEST && . venv/bin/activate && python ./app/network_monitor.py --scan --network $NETWORK --ports $PORTS --interval $INTERVAL || { echo 'Error occurred during configuration'; exit 1; }"]
+CMD ["/bin/bash", "-c", "ls && cd /app && ls && echo \"Waiting db...\" && /usr/bin/wait-for-it.sh db:3306 -- && . venv/bin/activate && python ./app/network_monitor.py --config --db_host $DB_HOST --db_user $DB_USER --db_password $DB_PASSWORD --db_name $DB_NAME --venv_path \"./venv\" --flask_host $FLASK_HOST --flask_port $FLASK_PORT --flask_debug $FLASK_DEBUG --default_network $NETWORK --default_ports $PORTS --default_interval $INTERVAL --spd_test $SPD_TEST && . venv/bin/activate && python ./app/network_monitor.py --scan --network $NETWORK --ports $PORTS --interval $INTERVAL || { echo 'Error occurred during configuration'; exit 1; }"]
