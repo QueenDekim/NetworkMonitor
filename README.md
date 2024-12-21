@@ -105,6 +105,7 @@ Choose an option:
 2. Scan
 3. Generate/Regenerate API Key
 4. SpeedTest
+5. Exit
 ```
 
 In `Configure`, you can enter data for logging into the database, Flask parameters (API), and standard values for the fields for entering scan parameters (if you press `Enter` without specifying the data, the default value will be used):
@@ -117,10 +118,16 @@ Database Name (default: network_monitoring):
 Flask Host (default: 0.0.0.0):
 Flask Port (default: 5000):
 Flask Debug (default: True):
+Default values:
 Default Network to Scan (default: 192.168.1.0/24): 10.10.123.0/24
 Default Ports to Scan (default: 22,80,443): 22,80,443
 Default Scan Interval (minutes, default: 1): 1
+Speedtest before scan (default: True):
 [Config] Configuration saved to config.py.
+[API] API available at http://0.0.0.0:5000/
+==========================================================
+[Config] Your API key is: b46c30918afe****c8a3db0e51aa3b27
+==========================================================
 ```
 
 In the `Scan`, specify the scan parameters (if you press `Enter` without specifying the data, the default value will be used):
