@@ -104,7 +104,6 @@ Database Host (default: localhost):
 Database User (default: root): user
 Database Password (default: password):
 Database Name (default: network_monitoring):
-Virtual Environment Path (default: .\venv):
 Flask Host (default: 0.0.0.0):
 Flask Port (default: 5000):
 Flask Debug (default: True):
@@ -126,7 +125,7 @@ Using with arguments:<br>
 Try `python network_monitor.py -h`:
 ```log
 usage: network_monitor.py [-h] [--config | --scan] [--network NETWORK] [--ports PORTS] [--interval INTERVAL] [--db_host DB_HOST] [--db_user DB_USER] [--db_password DB_PASSWORD] [--db_name DB_NAME]
-                          [--venv_path VENV_PATH] [--flask_host FLASK_HOST] [--flask_port FLASK_PORT] [--flask_debug FLASK_DEBUG] [--default_network DEFAULT_NETWORK] [--default_ports DEFAULT_PORTS]
+                          [--flask_host FLASK_HOST] [--flask_port FLASK_PORT] [--flask_debug FLASK_DEBUG] [--default_network DEFAULT_NETWORK] [--default_ports DEFAULT_PORTS]
                           [--default_interval DEFAULT_INTERVAL] [--spd_test SPD_TEST]
 
 Network Monitor v1.1.2
@@ -147,8 +146,6 @@ Configuration Arguments:
   --db_password DB_PASSWORD
                         Database Password
   --db_name DB_NAME     Database Name
-  --venv_path VENV_PATH
-                        Virtual Environment Path
   --flask_host FLASK_HOST
                         Flask Host
   --flask_port FLASK_PORT
