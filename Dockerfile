@@ -9,10 +9,11 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /
 
 # Копирование файлов в контейнер
-COPY requirements.txt ./
-COPY base.sql ./
-COPY wait-for-it.sh /usr/bin/wait-for-it.sh
-RUN chmod +x /usr/bin/wait-for-it.sh
+COPY . .
+# COPY requirements.txt ./
+# COPY base.sql ./
+# COPY wait-for-it.sh /usr/bin/wait-for-it.sh
+# RUN chmod +x /usr/bin/wait-for-it.sh
 
 # Создание виртуального окружения
 RUN python -m venv venv
@@ -24,7 +25,7 @@ RUN . venv/bin/activate && pip install --no-cache-dir -r requirements.txt
 EXPOSE 5000
 
 # Копирование всего содержимого приложения
-COPY ./app ./app
+# COPY ./app ./app
 
 # Установка переменных окружения
 ENV NETWORK="192.168.1.0/24"
