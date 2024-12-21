@@ -5,7 +5,7 @@ import pymysql                                                      # Import pym
 import json                                                         # Import json for working with JSON data
 import time                                                         # Import time for time-related functions
 from colorama import Fore                                           # Import Fore from colorama for colored terminal text
-import config
+import config as config
 from config import DB_CONFIG, VENV, FLASK_CONFIG, SCAN_CONFIG       # Import configuration settings from the config module
 import subprocess                                                   # Import subprocess for executing shell commands
 import os                                                           # Import os for operating system dependent functionality
@@ -188,14 +188,19 @@ def start_api():
             python_executable = os.path.join(VENV['PATH'], 'Scripts', 'python.exe')
         else:
             python_executable = os.path.join(VENV['PATH'], 'bin', 'python')
-        
-        # Open a null device to suppress output
-        with open(os.devnull, 'w') as devnull:
-            # Start the REST API as a subprocess, redirecting stdout and stderr to devnull
-            process = subprocess.Popen([python_executable, 'rest_api.py'], stdout=devnull, stderr=devnull)
-            print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API started at " + Fore.CYAN + f"http://{FLASK_CONFIG['HOST']}:{FLASK_CONFIG['PORT']}" + Fore.WHITE)
-        api_started = True      # Set the api_started flag to True indicating the API has started
-        return 0
+
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'rest_api.py'))
+
+        if not os.path.isfile(script_path):
+            print(f"Файл не найден: {script_path}")
+        else:
+            # Open a null device to suppress output
+            with open(os.devnull, 'w') as devnull:
+                # Start the REST API as a subprocess, redirecting stdout and stderr to devnull
+                process = subprocess.Popen([python_executable, script_path], stdout=devnull, stderr=devnull)
+                print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API started at " + Fore.CYAN + f"http://{FLASK_CONFIG['HOST']}:{FLASK_CONFIG['PORT']}" + Fore.WHITE)
+            api_started = True      # Set the api_started flag to True indicating the API has started
+            return 0
     except Exception as e:
         print(Fore.RED + "[ERR]" + Fore.WHITE + f" Failed to start 'rest_api.py'. {e}")
         api_started = False     # Set the api_started flag to False indicating the API did not start

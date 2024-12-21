@@ -1,6 +1,6 @@
-import network_monitor
-from network_monitor import DatabaseConnection
-from config import DB_CONFIG
+import app.network_monitor as network_monitor
+from app.network_monitor import DatabaseConnection
+from app.config import DB_CONFIG
 from unittest import mock
 
 def test_start_api():

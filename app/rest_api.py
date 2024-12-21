@@ -158,7 +158,7 @@ def index():
 @app.route('/favicon.ico')      # Define the route for the favicon.ico file
 def favicon():
     # Serve the favicon.ico file from the 'static' directory of the application
-    return send_from_directory(os.path.join(app.root_path, 'static'),   # Construct the path to the 'static' directory
+    return send_from_directory(os.path.join(app.root_path, '../static'),   # Construct the path to the 'static' directory
                                'favicon.ico',                           # Specify the favicon file to be served
                                mimetype='image/vnd.microsoft.icon')     # Set the MIME type for the favicon
 

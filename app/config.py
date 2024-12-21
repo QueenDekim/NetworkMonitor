@@ -6,7 +6,7 @@ DB_CONFIG = {
 }
 
 VENV = {
-    "PATH": ".\\venv",
+    "PATH": "..\\venv",
     "API_KEY": "",
     "VERSION": "1.1.3"
 }
