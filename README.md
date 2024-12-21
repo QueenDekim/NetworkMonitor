@@ -73,12 +73,22 @@
 
 ## Installation in local machine
 
+Windows:
 ```shell
 git clone https://github.com/QueenDekim/NetworkMonitor.git
 cd ./NetworkMonitor
 python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+Linux:
+```shell
+git clone https://github.com/QueenDekim/NetworkMonitor.git
+cd ./NetworkMonitor
+python3 -m venv venv
+. venv\bin\activate
+pip3 install -r requirements.txt
 ```
 
 Install `mysql` and execute the command from the `base.sql` file in it
