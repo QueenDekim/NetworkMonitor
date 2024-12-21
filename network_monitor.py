@@ -25,6 +25,14 @@ from getmac import get_mac_address                                  # Import get
 process = None          # Global variable to hold the reference to the API process
 api_started = False     # Global flag to indicate whether the API has been started
 
+
+def clear_console():
+    # Check OS
+    if os.name == 'nt':     # Windows
+        os.system('cls')
+    else:                   # Unix/Linux/MacOS
+        os.system('clear')
+
 #-----------------#
 # Context manager for managing database connections.
 class DatabaseConnection:
@@ -656,8 +664,11 @@ if __name__ == "__main__":
 
     # Handle case where no valid arguments are provided
     if not args.config and not args.scan:
+        
         # Start of the main program execution
         try:
+            clear_console()
+            print("")
             logo = text2art(
                 '''NetworkMonitor
                 by DekimDev''', "colossal"
