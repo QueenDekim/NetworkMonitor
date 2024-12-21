@@ -2,7 +2,7 @@
 # Imported modules
 from flask import Flask, request, jsonify, send_from_directory, render_template   # Import Flask framework and related functions for building web applications
 import pymysql                                          # Import pymysql for connecting to and interacting with MySQL databases
-from config import DB_CONFIG, FLASK_CONFIG, VENV              # Import database and Flask configuration settings from the config module
+from app.config import DB_CONFIG, FLASK_CONFIG, VENV              # Import database and Flask configuration settings from the config module
 import os                                               # Import os for interacting with the operating system (e.g., file paths, environment variables)
 from flasgger import Swagger                            # Importing Swagger for API documentation
 import json
