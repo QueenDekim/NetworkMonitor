@@ -12,7 +12,7 @@ app = Flask(__name__)   # Create an instance of the Flask application
 app.config['SWAGGER'] = {
     'title':"NetworkMonitor API",               # Title of your API
     'version':"1.0.2",                          # Version of your API
-    'termsOfService': '/ToS'                  # Terms of Servise (ToS)
+    'termsOfService': '/ToS'                    # Terms of Servise (ToS)
 }
 
 swagger = Swagger(app)
@@ -46,14 +46,14 @@ def get_scan_data_by_ip(ip):
     try:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM scans WHERE ip = %s", (ip,))  # Use a parameterized query for security
-        row = cursor.fetchone()  # Get a single record by IP address
-        return row  # Return the found record
+        row = cursor.fetchone()   # Get a single record by IP address
+        return row                # Return the found record
     except Exception as e:
         print(f"Error: {e}")
-        return None  # If an error occurs, return None
+        return None               # If an error occurs, return None
     finally:
         cursor.close()
-        conn.close()  # Close the database connection
+        conn.close()              # Close the database connection
 
 def update_or_create_scan(scan_data):
     # Function for updating an existing record or creating a new one.
@@ -162,7 +162,7 @@ def favicon():
                                'favicon.ico',                           # Specify the favicon file to be served
                                mimetype='image/vnd.microsoft.icon')     # Set the MIME type for the favicon
 
-@app.route('/ToS')  # Define a route for Terms of Service
+@app.route('/ToS')              # Define a route for Terms of Service
 def terms_of_service():
     return '''
     <html>
@@ -302,8 +302,8 @@ def get_scans_paginated(page):
       500:
         description: Internal server error
     """
-    data = get_scan_data()  # Get all data
-    per_page = 10  # Host count on page
+    data = get_scan_data()            # Get all data
+    per_page = 10                     # Host count on page
     start = (page - 1) * per_page
     end = start + per_page
     paginated_data = data[start:end]  # Data pagination
@@ -383,14 +383,14 @@ def get_scan_by_ip(ip):
       500:
         description: Internal server error
     """
-    row = get_scan_data_by_ip(ip)  # Retrieve data by IP address
+    row = get_scan_data_by_ip(ip)           # Retrieve data by IP address
 
-    if row is not None:  # If the record is found, return it
+    if row is not None:                     # If the record is found, return it
         return jsonify(row)
-    else:  # If the record is not found or an error occurred
-        if row is None:  # If an error occurred while retrieving data
+    else:                                   # If the record is not found or an error occurred
+        if row is None:                     # If an error occurred while retrieving data
             return jsonify({"error": "Internal server error"}), 500
-        else:  # If the record is not found
+        else:                               # If the record is not found
             return jsonify({"error": "Not found"}), 404
 
 @app.route('/api/scans', methods=['POST'])  # Определяем маршрут для POST-запроса
@@ -448,12 +448,11 @@ def create_or_update_scan():
     if not auth_header:
         return jsonify({"error": "Unauthorized"}), 401
 
-    token = auth_header  # Извлекаем токен
-    if token != VENV['API_KEY']:  # Сравниваем с ключом из конфигурации
+    token = auth_header               # Extracting the token
+    if token != VENV['API_KEY']:      # Comparing it with the key from the configuration
         return jsonify({"error": "Unauthorized"}), 401
 
-    # Получение данных из запроса
-    scan_data = request.json
+    scan_data = request.json          # Getting data from a request
     print(f"Received scan_data: {scan_data}")
     if not isinstance(scan_data, list) or not all(isinstance(item, list) for item in scan_data):
         return jsonify({"error": "Bad request"}), 400
