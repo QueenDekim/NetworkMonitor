@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Установка рабочей директории
-WORKDIR /NetworkMonitor
+WORKDIR /
 
 # Копирование файлов в контейнер
 COPY requirements.txt ./
