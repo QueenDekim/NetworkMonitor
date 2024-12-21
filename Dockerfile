@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /
 
 # Копирование файлов в контейнер
-COPY . .
+COPY . /
 # COPY requirements.txt ./
 # COPY base.sql ./
 COPY wait-for-it.sh /usr/bin/wait-for-it.sh
