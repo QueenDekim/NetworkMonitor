@@ -11,7 +11,7 @@ app = Flask(__name__)   # Create an instance of the Flask application
 
 app.config['SWAGGER'] = {
     'title':"NetworkMonitor API",               # Title of your API
-    'version':"1.0.2",                          # Version of your API
+    'version':"1.1.4",                          # Version of your API
     'termsOfService': '/ToS'                    # Terms of Servise (ToS)
 }
 
