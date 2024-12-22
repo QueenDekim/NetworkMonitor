@@ -231,6 +231,7 @@ Response example in `Json` format:
 ---
 
 - ### API documentation - `<ip>:<port(default 5000>/apidocs`
+  The API key can be found in the container logs, or in app/config.py
 
 ---
 
