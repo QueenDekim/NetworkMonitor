@@ -493,16 +493,19 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
 
     # Write the configuration data to config.py
     with open('app/config.py', 'w') as config_file:
+        config_file.write("import os\n\n")
         config_file.write("DB_CONFIG = ")
         config_file.write(json.dumps(config_data["DB_CONFIG"], indent=4))       # Write DB_CONFIG section
         config_file.write("\n\n")
-        config_file.write("VENV = ")
-        config_file.write(json.dumps(config_data["VENV"], indent=4))            # Write VENV section
-        config_file.write("\n\n")
+        config_file.write("VENV = {\n")
+        config_file.write(f"    'PATH': os.path.join('.', 'venv'),\n")
+        config_file.write(f"    'API_KEY': '',\n")
+        config_file.write(f"    'VERSION': '{config_data['VENV']['VERSION']}'\n")            # Write VENV section
+        config_file.write("}\n\n")
         config_file.write("FLASK_CONFIG = ")
         config_file.write(f"{{'HOST': '{flask_host}', 'PORT': {flask_port}, 'DEBUG': {str(flask_debug).capitalize()}}}\n")  # Write FLASK_CONFIG section
         config_file.write("\nSCAN_CONFIG = ")
-        config_file.write(f"{{\n    'DEFAULT_NETWORK': '{default_network}',\n   'DEFAULT_PORTS': '{default_ports}',\n   'DEFAULT_INTERVAL': {default_interval},\n   'SPD_TEST': {str(spd_test).capitalize()}\n}}\n")
+        config_file.write(f"{{\n    'DEFAULT_NETWORK': '{default_network}',\n    'DEFAULT_PORTS': '{default_ports}',\n    'DEFAULT_INTERVAL': {default_interval},\n    'SPD_TEST': {str(spd_test).capitalize()}\n}}\n")
         
         # config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))     # Write SCAN_CONFIG section
 
@@ -516,6 +519,8 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
 #-----------------#
 # Generate Api Key (MD5)
 def generate_api_key():
+    importlib.reload(config)
+
     random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
     api_key_string = f".netmonitor_{random_number}_config."  # Form the string for the key
     api_key = hashlib.md5(api_key_string.encode()).hexdigest()  # Calculate the MD5 hash
@@ -529,23 +534,30 @@ def generate_api_key():
         exec(config_file.read(), config_data)  # Execute the code to get the variables
 
     # Update API_KEY in VENV
-    config_data['VENV']["API_KEY"] = api_key
 
     # Save the updated config back to config.py
     with open('app/config.py', 'w') as config_file:
+        config_file.write("import os\n\n")
         config_file.write("DB_CONFIG = ")
         config_file.write(json.dumps(config_data["DB_CONFIG"], indent=4))  # Write DB_CONFIG
         config_file.write("\n\n")
-        config_file.write("VENV = ")
-        config_file.write(json.dumps(config_data["VENV"], indent=4))  # Write VENV
-        config_file.write("\n\n")
+        config_file.write("VENV = {\n")
+        config_file.write(f"    'PATH': os.path.join('.', 'venv'),\n")
+        config_file.write(f"    'API_KEY': '{api_key}',\n")
+        config_file.write(f"    'VERSION': '{config_data['VENV']['VERSION']}'\n") 
+        config_file.write("}\n\n")
         config_file.write("FLASK_CONFIG = {\n")
         config_file.write(f"    'HOST': '{config_data['FLASK_CONFIG']['HOST']}',\n")
         config_file.write(f"    'PORT': {config_data['FLASK_CONFIG']['PORT']},\n")
         config_file.write(f"    'DEBUG': {str(config_data['FLASK_CONFIG']['DEBUG']).capitalize()}\n")  # Write DEBUG correctly
         config_file.write("}\n\n")
-        config_file.write("SCAN_CONFIG = ")
-        config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))  # Write SCAN_CONFIG
+        config_file.write("SCAN_CONFIG = {\n")
+        config_file.write(f"    'DEFAULT_NETWORK': '{config_data['SCAN_CONFIG']['DEFAULT_NETWORK']}',\n")
+        config_file.write(f"    'DEFAULT_PORTS': '{config_data['SCAN_CONFIG']['DEFAULT_PORTS']}',\n")
+        config_file.write(f"    'DEFAULT_INTERVAL': {config_data['SCAN_CONFIG']['DEFAULT_INTERVAL']},\n")
+        config_file.write(f"    'SPD_TEST': {str(config_data['SCAN_CONFIG']['SPD_TEST']).capitalize()}\n")
+        config_file.write("}")
+        # config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))  # Write SCAN_CONFIG
 
     print(Fore.GREEN + "[Config]" + Fore.WHITE + " API Key saved to config.py.")
 
