@@ -23,7 +23,7 @@
       app:
         image: dekimasc/networkmonitor:latest
         volumes:
-          - .:/app
+          - ./app:/app
         depends_on:
           - db
         ports:
