@@ -431,9 +431,9 @@ def update_device_status(cursor, found_hosts):
 def configure_settings(db_host=None, db_user=None, db_password=None, db_name=None, flask_host=None, flask_port=None, flask_debug=None, default_network=None, default_ports=None, default_interval=None, spd_test=None):
     
 
-    random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
-    api_key_string = f".netmonitor_{random_number}_config."  # Form the string for the key
-    api_key = hashlib.md5(api_key_string.encode()).hexdigest()  # Calculate the MD5 hash
+    # random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
+    # api_key_string = f".netmonitor_{random_number}_config."  # Form the string for the key
+    # api_key = hashlib.md5(api_key_string.encode()).hexdigest()  # Calculate the MD5 hash
 
     # If the parameters are not passed, request from the user
     if db_host is None:
@@ -475,7 +475,7 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         },
         "VENV": {
             "PATH": VENV["PATH"],
-            "API_KEY": api_key,
+            "API_KEY": VENV["API_KEY"],
             "VERSION": VENV["VERSION"]
         },
         "FLASK_CONFIG": {
@@ -492,7 +492,7 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
     }
 
     # Write the configuration data to config.py
-    with open('config.py', 'w') as config_file:
+    with open('app/config.py', 'w') as config_file:
         config_file.write("DB_CONFIG = ")
         config_file.write(json.dumps(config_data["DB_CONFIG"], indent=4))       # Write DB_CONFIG section
         config_file.write("\n\n")
@@ -508,9 +508,10 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
 
     print(Fore.GREEN + "[Config]" + Fore.WHITE + " Configuration saved to config.py.")
     print(Fore.GREEN + "[API]" + Fore.WHITE + " API available at http://" + flask_host + ":" + str(flask_port) + "/")
-    print(Fore.GREEN + "==========================================================" + Fore.WHITE)
-    print(Fore.GREEN + "[Config]" + Fore.WHITE + " Your API key is: " + Fore.YELLOW + api_key + Fore.WHITE)
-    print(Fore.GREEN + "==========================================================" + Fore.WHITE)
+    # print(Fore.GREEN + "==========================================================" + Fore.WHITE)
+    # print(Fore.GREEN + "[Config]" + Fore.WHITE + " Your API key is: " + Fore.YELLOW + api_key + Fore.WHITE)
+    # print(Fore.GREEN + "==========================================================" + Fore.WHITE)
+    generate_api_key()
 
 #-----------------#
 # Generate Api Key (MD5)
@@ -524,14 +525,14 @@ def generate_api_key():
 
     # Load the existing config.py
     config_data = {}
-    with open('config.py', 'r') as config_file:
+    with open('app/config.py', 'r') as config_file:
         exec(config_file.read(), config_data)  # Execute the code to get the variables
 
     # Update API_KEY in VENV
     config_data['VENV']["API_KEY"] = api_key
 
     # Save the updated config back to config.py
-    with open('config.py', 'w') as config_file:
+    with open('app/config.py', 'w') as config_file:
         config_file.write("DB_CONFIG = ")
         config_file.write(json.dumps(config_data["DB_CONFIG"], indent=4))  # Write DB_CONFIG
         config_file.write("\n\n")
