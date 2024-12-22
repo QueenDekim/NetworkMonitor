@@ -73,12 +73,22 @@
 
 ## Installation in local machine
 
+Windows:
 ```shell
 git clone https://github.com/QueenDekim/NetworkMonitor.git
 cd ./NetworkMonitor
 python -m venv venv
 .\venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+Linux:
+```shell
+git clone https://github.com/QueenDekim/NetworkMonitor.git
+cd ./NetworkMonitor
+python3 -m venv venv
+. venv/bin/activate
+pip3 install -r requirements.txt
 ```
 
 Install `mysql` and execute the command from the `base.sql` file in it
@@ -95,6 +105,7 @@ Choose an option:
 2. Scan
 3. Generate/Regenerate API Key
 4. SpeedTest
+5. Exit
 ```
 
 In `Configure`, you can enter data for logging into the database, Flask parameters (API), and standard values for the fields for entering scan parameters (if you press `Enter` without specifying the data, the default value will be used):
@@ -104,14 +115,19 @@ Database Host (default: localhost):
 Database User (default: root): user
 Database Password (default: password):
 Database Name (default: network_monitoring):
-Virtual Environment Path (default: .\venv):
 Flask Host (default: 0.0.0.0):
 Flask Port (default: 5000):
 Flask Debug (default: True):
+Default values:
 Default Network to Scan (default: 192.168.1.0/24): 10.10.123.0/24
 Default Ports to Scan (default: 22,80,443): 22,80,443
 Default Scan Interval (minutes, default: 1): 1
+Speedtest before scan (default: True):
 [Config] Configuration saved to config.py.
+[API] API available at http://0.0.0.0:5000/
+==========================================================
+[Config] Your API key is: b46c30918afe****c8a3db0e51aa3b27
+==========================================================
 ```
 
 In the `Scan`, specify the scan parameters (if you press `Enter` without specifying the data, the default value will be used):
@@ -126,7 +142,7 @@ Using with arguments:<br>
 Try `python network_monitor.py -h`:
 ```log
 usage: network_monitor.py [-h] [--config | --scan] [--network NETWORK] [--ports PORTS] [--interval INTERVAL] [--db_host DB_HOST] [--db_user DB_USER] [--db_password DB_PASSWORD] [--db_name DB_NAME]
-                          [--venv_path VENV_PATH] [--flask_host FLASK_HOST] [--flask_port FLASK_PORT] [--flask_debug FLASK_DEBUG] [--default_network DEFAULT_NETWORK] [--default_ports DEFAULT_PORTS]
+                          [--flask_host FLASK_HOST] [--flask_port FLASK_PORT] [--flask_debug FLASK_DEBUG] [--default_network DEFAULT_NETWORK] [--default_ports DEFAULT_PORTS]
                           [--default_interval DEFAULT_INTERVAL] [--spd_test SPD_TEST]
 
 Network Monitor v1.1.2
@@ -147,8 +163,6 @@ Configuration Arguments:
   --db_password DB_PASSWORD
                         Database Password
   --db_name DB_NAME     Database Name
-  --venv_path VENV_PATH
-                        Virtual Environment Path
   --flask_host FLASK_HOST
                         Flask Host
   --flask_port FLASK_PORT
@@ -165,7 +179,7 @@ Configuration Arguments:
 ```
 For configuration only use 
 ```
-python network_monitor.py --config --db_host <host> --db_user <user> --db_password <password> --db_name <db name> --venv_path "./venv" --flask_host <flask host> --flask_port <flask port> --flask_debug <True/False> --default_network <network> --default_ports <ports> --default_interval <interval> --spd_test <True/False>
+python network_monitor.py --config --db_host <host> --db_user <user> --db_password <password> --db_name <db name> --flask_host <flask host> --flask_port <flask port> --flask_debug <True/False> --default_network <network> --default_ports <ports> --default_interval <interval> --spd_test <True/False>
 ```
 For scan use
 ```
