@@ -8,14 +8,14 @@ DB_CONFIG = {
 }
 
 VENV = {
-    "PATH": os.path.join(".", "venv"),
-    "API_KEY": "",
-    "VERSION": "1.1.4"
+    'PATH': os.path.join('.', 'venv'),
+    'API_KEY': '',
+    'VERSION': '1.1.5'
 }
 
 FLASK_CONFIG = {
-    'HOST': '0.0.0.0', 
-    'PORT': 5000, 
+    'HOST': '0.0.0.0',
+    'PORT': 5000,
     'DEBUG': True
 }
 
@@ -23,5 +23,5 @@ SCAN_CONFIG = {
     'DEFAULT_NETWORK': '192.168.1.0/24',
     'DEFAULT_PORTS': '22,80,443',
     'DEFAULT_INTERVAL': 1.0,
-    'SPD_TEST': True
+    'SPD_TEST': False
 }

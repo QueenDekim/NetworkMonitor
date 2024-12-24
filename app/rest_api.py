@@ -1,11 +1,13 @@
 #-----------------#
 # Imported modules
-from flask import Flask, request, jsonify, send_from_directory, render_template   # Import Flask framework and related functions for building web applications
-import pymysql                                          # Import pymysql for connecting to and interacting with MySQL databases
-from config import DB_CONFIG, FLASK_CONFIG, VENV              # Import database and Flask configuration settings from the config module
-import os                                               # Import os for interacting with the operating system (e.g., file paths, environment variables)
-from flasgger import Swagger                            # Importing Swagger for API documentation
-import json
+from flask import Flask, request, jsonify, send_from_directory, send_file   # Import Flask framework and related functions for building web applications
+import pymysql                                                              # Import pymysql for connecting to and interacting with MySQL databases
+from config import DB_CONFIG, FLASK_CONFIG, VENV                            # Import database and Flask configuration settings from the config module
+import os                                                                   # Import os for interacting with the operating system (e.g., file paths, environment variables)
+from flasgger import Swagger                                                # Importing Swagger for API documentation
+import json                                                                 # Import json for working with JSON data
+from fpdf import FPDF                                                       # Import FPDF for generating PDF reports
+from datetime import datetime                                               # Import datetime for working with dates and times
 
 app = Flask(__name__)   # Create an instance of the Flask application
 
@@ -97,6 +99,71 @@ def get_ports_by_ip(ip):
     finally:
         cursor.close()
         conn.close()
+
+def fetch_scan_data():
+    """
+    Получение данных о сканах из базы данных.
+    
+    Returns:
+        list: Список записей о сканах.
+    """
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM scans ORDER BY id ASC")
+    scans = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return scans
+
+def generate_pdf_report(scans):
+    """
+    Генерация PDF отчета на основе данных о сканах.
+    
+    Args:
+        scans (list): Список записей о сканах.
+    
+    Returns:
+        str: Путь к сгенерированному PDF файлу.
+    """
+    # Создаем PDF отчет
+    pdf = FPDF()
+    pdf.add_page()
+    
+    # Устанавливаем встроенный шрифт Arial
+    pdf.set_font("Arial", size=10)
+
+    # Заголовок отчета
+    pdf.cell(200, 10, txt="Network Scan Report", ln=True, align='C')  # Заголовок на английском
+    pdf.cell(200, 10, txt="", ln=True)  # Пустая строка
+
+    # Информация о количестве хостов
+    up_hosts = [scan for scan in scans if scan[2] == 'up']
+    down_hosts = [scan for scan in scans if scan[2] == 'down']
+    up_count = len(up_hosts)
+    down_count = len(down_hosts)
+    pdf.cell(0, 10, txt=f"Number of hosts found: Up - {up_count}, Down - {down_count}", ln=True)  # Информация на английском
+    pdf.cell(200, 10, txt="", ln=True)  # Пустая строка
+
+    # Добавляем данные о сканах
+    for scan in scans:
+        # Преобразуем текст в латиницу или используем только поддерживаемые символы
+        pdf.cell(0, 10, txt=f"IP: {scan[1]}, Status: {scan[2]}, Date: {scan[4]}", ln=True)
+
+        # Получаем информацию о портах для текущего хоста
+        device_info = json.loads(scan[3])  # Предполагается, что device_info хранит JSON
+        if 'ports' in device_info:
+            pdf.cell(0, 10, txt="Ports:", ln=True)
+            for port_info in device_info['ports']:
+                pdf.cell(0, 10, txt=f"{port_info['port']} | {port_info['name']} | {port_info['state']}", ln=True)
+
+        pdf.cell(200, 10, txt="", ln=True)  # Пустая строка
+
+    # Сохраняем PDF файл
+    current_time = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+    report_path = os.path.join(os.path.dirname(__file__), f"reports/scan_report_{current_time}.pdf")
+    pdf.output(report_path)
+
+    return report_path
 
 @app.route('/')     # Define the route for the root URL of the application
 def index():
@@ -462,6 +529,31 @@ def create_or_update_scan():
         return jsonify({"message": "Scan created or updated successfully"}), 201
     else:
         return jsonify({"error": "Internal server error"}), 500
+
+@app.route('/api/report', methods=['GET'])
+def generate_report():
+    """
+    Генерация отчета о сканировании
+    ---
+    responses:
+      200:
+        description: Отчет о сканировании в формате PDF
+      500:
+        description: Внутренняя ошибка сервера
+    """
+    try:
+        # Получаем данные о сканах
+        scans = fetch_scan_data()
+
+        # Генерируем PDF отчет
+        report_path = generate_pdf_report(scans)
+
+        # Возвращаем PDF файл в ответе
+        return send_file(report_path, as_attachment=True)
+
+    except Exception as e:
+        print(f"Error generating report: {e}")
+        return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
 if __name__ == '__main__':
     # Start the Flask application with the specified configuration settings

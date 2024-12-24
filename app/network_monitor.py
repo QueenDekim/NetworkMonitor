@@ -19,6 +19,7 @@ from art import *                                                   # Import eve
 import importlib                                                    # Import importlib for importing modules dynamically
 import speedtest                                                    # Import the speedtest library for testing internet speed
 from getmac import get_mac_address                                  # Import get_mac_address to retrieve MAC addresses of devices
+from datetime import datetime                                       # Import datetime for working with dates and times
 
 #-----------------#
 # Global variables to manage the API process state
@@ -189,11 +190,17 @@ def start_api():
         else:
             python_executable = os.path.join(VENV['PATH'], 'bin', 'python')
         
-        # Open a null device to suppress output
-        with open(os.devnull, 'w') as devnull:
-            # Start the REST API as a subprocess, redirecting stdout and stderr to devnull
-            process = subprocess.Popen([python_executable, 'app/rest_api.py'], stdout=devnull, stderr=devnull)
+        current_date = datetime.now().strftime("%Y.%m.%d")
+        # Open the log file for writing
+        with open(f'flask_{current_date}.log', 'a') as log_file:
+            # Start the REST API as a subprocess, redirecting stdout and stderr to the log file
+            process = subprocess.Popen(
+                [python_executable, 'app/rest_api.py'],
+                stdout=log_file,
+                stderr=log_file
+            )
             print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API started at " + Fore.CYAN + f"http://{FLASK_CONFIG['HOST']}:{FLASK_CONFIG['PORT']}" + Fore.WHITE)
+        
         api_started = True      # Set the api_started flag to True indicating the API has started
         return 0
     except Exception as e:
