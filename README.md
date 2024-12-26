@@ -17,8 +17,6 @@
 - Installation in using `docker-compose`:<br>
     Create a new file named `docker-compose.yml` with the following content:
     ```yml
-    version: '3.8'
-
     services:
       app:
         image: ghcr.io/queendekim/networkmonitor:latest
@@ -73,7 +71,7 @@
   - Run **app** container:
       ```
       docker run -d \
-        --name app \
+        --name network_monitor_app \
         --restart always \
         -p 5000:5000 \
         -e NETWORK=192.168.1.0/24 \
@@ -87,9 +85,9 @@
         -e FLASK_PORT=5000 \
         -e FLASK_DEBUG=True \
         -e SPD_TEST=True \
-        --link db \
+        --link network_monitor_db:db \
         -v $(pwd)/app:/app \
-        dekimasc/networkmonitor:latest
+        ghcr.io/queendekim/networkmonitor:latest
       ```
 
       *Replace the values of `NETWORK`, `PORTS`, `INTERVAL`, etc. with yours*
