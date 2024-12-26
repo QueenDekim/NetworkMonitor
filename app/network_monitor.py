@@ -193,9 +193,12 @@ def start_api():
         else:
             python_executable = os.path.join(VENV['PATH'], 'bin', 'python')
         
+        if not os.path.exists('logs'):
+            os.makedirs('logs')  # Create the logs directory
+
         current_date = datetime.now().strftime("%Y.%m.%d")
         # Open the log file for writing
-        with open(f'flask_{current_date}.log', 'a') as log_file:
+        with open(f'logs/flask_{current_date}.log', 'a') as log_file:
             # Start the REST API as a subprocess, redirecting stdout and stderr to the log file
             process = subprocess.Popen(
                 [python_executable, 'app/rest_api.py'],

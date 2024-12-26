@@ -8,6 +8,7 @@ from flasgger import Swagger                                                # Im
 import json                                                                 # Import json for working with JSON data
 from fpdf import FPDF                                                       # Import FPDF for generating PDF reports
 from datetime import datetime                                               # Import datetime for working with dates and times
+import glob                                                                 # Import glob for working with file paths
 
 app = Flask(__name__)   # Create an instance of the Flask application
 
@@ -164,6 +165,52 @@ def generate_pdf_report(scans):
     pdf.output(report_path)
 
     return report_path
+
+def get_latest_log():
+    # Получаем текущую дату в формате YYYY.MM.DD
+    current_date = datetime.now().strftime("%Y.%m.%d")
+    # Формируем шаблон для поиска лог файлов
+    log_pattern = os.path.join('logs', f'flask_{current_date}.log')
+    # Находим все файлы, соответствующие шаблону
+    log_files = glob.glob(log_pattern)
+    
+    if not log_files:
+        return "Лог файл не найден.", 404  # Если лог файл не найден, возвращаем 404
+    
+    # Получаем последний лог файл
+    latest_log_file = max(log_files, key=os.path.getctime)
+    
+    # Читаем содержимое лог файла
+    with open(latest_log_file, 'r') as file:
+        log_content = file.read()
+    
+    return log_content, 200  # Возвращаем содержимое лог файла и статус 200
+
+def get_log_by_date(date):
+    # Формируем шаблон для поиска лог файлов по дате
+    log_pattern = os.path.join('logs', f'flask_{date}.log')
+    # Находим все файлы, соответствующие шаблону
+    log_files = glob.glob(log_pattern)
+    
+    if not log_files:
+        return "Лог файл не найден.", 404  # Если лог файл не найден, возвращаем 404
+    
+    # Получаем последний лог файл
+    latest_log_file = max(log_files, key=os.path.getctime)
+    
+    # Читаем содержимое лог файла
+    with open(latest_log_file, 'r') as file:
+        log_content = file.read()
+    
+    return log_content, 200  # Возвращаем содержимое лог файла и статус 200
+
+def get_log_routes():
+    return {
+        "available_routes": [
+            "/api/logs/latest",
+            "/api/logs/<date>"
+        ]
+    }
 
 @app.route('/')     # Define the route for the root URL of the application
 def index():
@@ -554,6 +601,45 @@ def generate_report():
     except Exception as e:
         print(f"Error generating report: {e}")
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
+
+@app.route('/api/logs/latest', methods=['GET'])
+def get_latest_log_route():
+    """
+    Получить содержимое последнего лог файла
+    ---
+    responses:
+      200:
+        description: Содержимое лог файла
+      404:
+        description: Лог файл не найден
+    """
+    log_content, status_code = get_latest_log()
+    return log_content, status_code
+
+@app.route('/api/logs/<string:date>', methods=['GET'])
+def get_log_by_date_route(date):
+    """
+    Получить содержимое лог файла по дате
+    ---
+    parameters:
+      - name: date
+        in: path
+        type: string
+        required: true
+        description: Дата в формате yyyy.mm.dd
+    responses:
+      200:
+        description: Содержимое лог файла
+      404:
+        description: Лог файл не найден
+    """
+    log_content, status_code = get_log_by_date(date)
+    return log_content, status_code
+
+@app.route('/api/logs', methods=['GET'])
+def get_logs_route():
+    routes = get_log_routes()
+    return jsonify(routes), 200
 
 if __name__ == '__main__':
     # Start the Flask application with the specified configuration settings
