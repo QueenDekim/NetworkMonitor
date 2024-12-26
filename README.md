@@ -61,11 +61,35 @@
   You can use the following command to run the container:
   - Run **MySQL** container:
       ```
-      docker run -d --name network_monitor_db -e MYSQL_ROOT_PASSWORD=mysecretpassword -e MYSQL_DATABASE=network_monitoring -v db_data:/var/lib/mysql -v $(pwd)/base.sql:/docker-entrypoint-initdb.d/base.sql mysql:5.7
+      docker run -d \
+        --name network_monitor_db \
+        --restart always \
+        -e MYSQL_ROOT_PASSWORD=mysecretpassword \
+        -e MYSQL_DATABASE=network_monitoring \
+        -v db_data:/var/lib/mysql \
+        -v $(pwd)/base.sql:/docker-entrypoint-initdb.d/base.sql \
+        mysql:5.7
       ```
   - Run **app** container:
       ```
-      docker run -d --name network_monitor_app --link mysql_db:db -p 5000:5000 -e NETWORK=192.168.1.0/24 -e PORTS=22,443,80 -e INTERVAL=1.0 -e DB_HOST=db -e DB_USER=root -e DB_PASSWORD=mysecretpassword -e DB_NAME=network_monitoring -e FLASK_HOST=0.0.0.0 -e FLASK_PORT=5000 -e FLASK_DEBUG=True dekimasc/networkmonitor:latest
+      docker run -d \
+        --name app \
+        --restart always \
+        -p 5000:5000 \
+        -e NETWORK=192.168.1.0/24 \
+        -e PORTS=22,443,80 \
+        -e INTERVAL=1.0 \
+        -e DB_HOST=db \
+        -e DB_USER=root \
+        -e DB_PASSWORD=mysecretpassword \
+        -e DB_NAME=network_monitoring \
+        -e FLASK_HOST=0.0.0.0 \
+        -e FLASK_PORT=5000 \
+        -e FLASK_DEBUG=True \
+        -e SPD_TEST=True \
+        --link db \
+        -v $(pwd)/app:/app \
+        dekimasc/networkmonitor:latest
       ```
 
       *Replace the values of `NETWORK`, `PORTS`, `INTERVAL`, etc. with yours*
