@@ -21,7 +21,7 @@
 
     services:
       app:
-        image: dekimasc/networkmonitor:latest
+        image: ghcr.io/queendekim/networkmonitor:latest
         volumes:
           - ./app:/app
         depends_on:
