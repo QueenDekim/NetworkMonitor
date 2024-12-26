@@ -251,8 +251,8 @@ def terminate_api():
 def parse_network_range(network_range):
     networks = []
     
-    # Split ranges by comma
-    for net in network_range.split(','):
+    # Split the ranges by space
+    for net in network_range.split():
         net = net.strip()
         # Split into parts by dots
         parts = net.split('.')
