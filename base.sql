@@ -8,5 +8,6 @@ CREATE TABLE scans (
     device_info JSON,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
     domain VARCHAR(100) DEFAULT 'None',
-    mac_address VARCHAR(50) DEFAULT 'None'
-);
+    mac_address VARCHAR(50) DEFAULT 'None',
+    network VARCHAR(18) DEFAULT 'None'
+)

@@ -5,11 +5,11 @@ import pymysql                                                      # Import pym
 import json                                                         # Import json for working with JSON data
 import time                                                         # Import time for time-related functions
 from colorama import Fore                                           # Import Fore from colorama for colored terminal text
-import config as config
+import config as config                                             # Import the config module for configuration settings
 from config import DB_CONFIG, VENV, FLASK_CONFIG, SCAN_CONFIG       # Import configuration settings from the config module
 import subprocess                                                   # Import subprocess for executing shell commands
 import os                                                           # Import os for operating system dependent functionality
-import sys
+import sys                                                          # Import sys for system-specific parameters and functions
 import getpass                                                      # Import getpass for securely getting user passwords without echoing
 import socket                                                       # Import the socket library for network communication
 import random                                                       # Import the random library for generating random numbers
@@ -20,18 +20,20 @@ import importlib                                                    # Import imp
 import speedtest                                                    # Import the speedtest library for testing internet speed
 from getmac import get_mac_address                                  # Import get_mac_address to retrieve MAC addresses of devices
 from datetime import datetime                                       # Import datetime for working with dates and times
+import ipaddress                                                    # Import ipaddress for working with IP addresses
 
 #-----------------#
 # Global variables to manage the API process state
 process = None          # Global variable to hold the reference to the API process
 api_started = False     # Global flag to indicate whether the API has been started
 
-
+#-----------------#
+# Function to clear the console screen based on the operating system.
 def clear_console():
     # Check OS
-    if os.name == 'nt':     # Windows
+    if sys.platform.startswith('win'):  # Windows
         os.system('cls')
-    else:                   # Unix/Linux/MacOS
+    else:                               # Unix/Linux/MacOS
         os.system('clear')
 
 #-----------------#
@@ -122,7 +124,8 @@ def initialize_database(cursor):
                             device_info JSON,
                             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP(),
                             domain VARCHAR(100) DEFAULT 'None',
-                            mac_address VARCHAR(50) DEFAULT 'None'
+                            mac_address VARCHAR(50) DEFAULT 'None',
+                            network VARCHAR(18) DEFAULT 'None'
                         )
                     """)
                     print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
@@ -242,23 +245,56 @@ def terminate_api():
             # Handle the case where the termination is interrupted by the user
             print(Fore.RED + "[ERR]" + Fore.WHITE + " Failed to terminate the API process.")
             return 1
+
+#-----------------#
+# Parses the network range string and generates a list of individual networks.
+def parse_network_range(network_range):
+    networks = []
+    
+    # Split ranges by comma
+    for net in network_range.split(','):
+        net = net.strip()
+        # Split into parts by dots
+        parts = net.split('.')
+        
+        # Generate all possible combinations for each octet
+        def generate_addresses(parts, index):
+            if index == len(parts):
+                # If we reached the end, form the address
+                networks.append('.'.join(parts))
+                return
+            
+            if '-' in parts[index]:
+                # If there is a range, split it
+                start, end = map(int, parts[index].split('-'))
+                for i in range(start, end + 1):
+                    parts[index] = str(i)
+                    generate_addresses(parts, index + 1)
+                parts[index] = f"{start}-{end}"  # Restore the range
+            else:
+                # If there is no range, just continue
+                generate_addresses(parts, index + 1)
+        generate_addresses(parts, 0)
+    return networks
+
 #-----------------#
 # Scans the specified network for devices and updates the database with the results.
-def scan_network(network, ports):
-    nm = initialize_nmap()      # Initialize the Nmap scanner
+def scan_network(network_range, ports):
+    # Generate all networks from the range
+    networks = parse_network_range(network_range)
 
-    # Check if the Nmap scanner was initialized successfully
-    if not nm:
-        return                  # Exit the function if initialization failed
-    
-    # Perform the network scan with the specified parameters
-    if not perform_scan(nm, network, ports):
-        return                  # Exit the function if the scan was not successful
-    
-    # Use a database connection to process the scan results
-    with DatabaseConnection() as cursor:
-        process_scan_results(nm, cursor)    # Process and store the scan results in the database
-    return 0
+    for network in networks:
+        nm = initialize_nmap()  # Initialize nmap
+        if not nm:
+            return
+        
+        # Perform scanning for each network
+        if not perform_scan(nm, network, ports):
+            return
+        
+        with DatabaseConnection() as cursor:
+            process_scan_results(nm, cursor, network)  # Passing the current network
+
 #-----------------#
 # Initializes and returns an nmap PortScanner instance.
 def initialize_nmap():
@@ -286,60 +322,89 @@ def perform_scan(nm, network, ports):
         print(Fore.RED + "[nmap]" + Fore.WHITE + f" Error during scanning: {e}")
         return False    # Return False to indicate the scan failed
 
+def normalize_device_info(device_info):
+    """
+    Normalizes device information to a consistent format.
+    
+    Args:
+        device_info (str): A string containing device information in JSON format.
+    
+    Returns:
+        str: A normalized string with device information in JSON format.
+    """
+    # Deserialize the JSON string into a dictionary
+    device_info_dict = json.loads(device_info)
+    
+    # Sort keys and create a new dictionary
+    normalized_info = {
+        "hostname": device_info_dict.get("hostname", ""),
+        "ports": sorted(device_info_dict.get("ports", []), key=lambda x: x['port'])
+    }
+    
+    # Serialize back to a string with sorted keys
+    return json.dumps(normalized_info, sort_keys=True)
+
 #-----------------#
 # Processes scan results and updates the database with device information.
-def process_scan_results(nm, cursor):
+def process_scan_results(nm, cursor, network):
+    # Check if the database cursor is available
     if cursor is None:
         print(Fore.RED + "[db]" + Fore.WHITE + " No database cursor available. Exiting process scan results.")
-        return  # Exit the function if cursor is None
+        return
     
-    # Initialize a set to keep track of found hosts
-    found_hosts = set()
+    found_hosts = set()  # Initialize a set to keep track of found hosts
 
-    # Iterate over all hosts found in the Nmap scan results
+    # Iterate through all hosts found in the network scan
     for host in nm.all_hosts():
-        status = nm[host].state()       # Get the current state of the host (up or down)
-        # Retrieve device information and port status as a JSON string
-        device_info_json, ports_status_str = get_device_info_json(nm, host)
-        print(Fore.YELLOW + "[nmap]" + Fore.WHITE + f" Found device: " + Fore.CYAN + f"{host} | " + Fore.WHITE + f"Ports: [{ports_status_str}" + Fore.WHITE + "]")
+        status = nm[host].state()  # Get the current state of the host
+        device_info_json, _ = get_device_info_json(nm, host)  # Retrieve device information in JSON format
+        
+        # Get the network address from the provided network
+        network_address = str(ipaddress.ip_network(f"{network}", strict=False).network_address)
+        print(Fore.YELLOW + "[network]" + Fore.WHITE + f" Network address: {Fore.GREEN}{network_address}")
+        
         try:
+            # Attempt to get the MAC address of the host
             mac_address = get_mac_address(ip=host)
             if mac_address:
-                print(Fore.YELLOW + "[mac]" + Fore.WHITE + f" Found MAC address {mac_address} for host {host}")
+                print(Fore.YELLOW + "[mac]" + Fore.WHITE + f" Found MAC address {Fore.GREEN}{mac_address}{Fore.WHITE} for host {Fore.GREEN}{host}")
             else:
-                mac_address = "None"
-                print(Fore.YELLOW + "[mac]" + Fore.WHITE + f" No MAC address found for host {host}")
-        except Exception as e:
-            print(Fore.RED + "[mac]" + Fore.WHITE + f" Error getting MAC address: {e}")
+                print(Fore.YELLOW + "[mac]" + Fore.WHITE + f" MAC address for the host {Fore.GREEN}{host}{Fore.WHITE} was not found")
+                mac_address = "None"  # Set MAC address to None if not found
 
-        try:    
-            addr = socket.gethostbyaddr(host)
-            address = addr[0]
-            print(Fore.YELLOW + "[socket]" + Fore.WHITE + f"Found domain name {addr[0]} on host {host}")
-        except:
-            address = "None"
-            print(Fore.YELLOW + "[socket]" + Fore.WHITE + f"No domain name found on host {host}")
-        
-        # Check if the device is already in the database
-        try:
+            try:    
+                # Attempt to get the domain name associated with the host
+                addr = socket.gethostbyaddr(host)
+                address = addr[0]  # Get the domain name
+                print(Fore.YELLOW + "[socket]" + Fore.WHITE + f"Found domain name {Fore.GREEN}{addr[0]}{Fore.WHITE} on host {Fore.GREEN}{host}{Fore.WHITE}")
+            except:
+                address = "None"  # Set address to None if not found
+                print(Fore.YELLOW + "[socket]" + Fore.WHITE + f" No domain name found on host {Fore.GREEN}{host}")
+                
+            # Check if the device already exists in the database
             cursor.execute("SELECT device_info FROM scans WHERE ip = %s", (host,))
-            result = cursor.fetchone()
+            result = cursor.fetchone()  # Fetch the result
+
+            if result:
+                # Update existing device information in the database
+                update_device_info(cursor, status, device_info_json, host, address, result[0], network_address, mac_address)
+            else:
+                # Insert new device information into the database
+                insert_device_info(cursor, status, device_info_json, host, address, network_address, mac_address)
+
+            found_hosts.add(host)  # Add the host to the found hosts set
+
         except Exception as e:
-            print(Fore.RED + "[db]" + Fore.WHITE + f" Error checking database for existing device: {e}")
-            return None
+            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")  # Print any errors encountered
 
-        # If the device exists in the database, update its information
-        if result:
-            update_device_info(cursor, status, device_info_json, host, result[0], address, mac_address)
-        # If the device does not exist, insert new device information
-        else:
-            insert_device_info(cursor, status, device_info_json, host, address, mac_address)
-
-        found_hosts.add(host)           # Add the host to the set of found hosts
-
-    update_device_status(cursor, found_hosts)   # Update the status of all found hosts in the database
-    cursor.connection.commit()                  # Commit the changes to the database
-    print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database updated successfully.")
+    try:
+        # Update the status of devices in the database
+        update_device_status(cursor, found_hosts)
+        cursor.connection.commit()  # Commit the changes to the database
+        print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database updated successfully.")
+    except Exception as e:
+        print(Fore.RED + "[db]" + Fore.WHITE + f" Error updating device status: {e}")  # Print any errors encountered during update
+    
 
 #-----------------#
 # Collects device information and returns it as a JSON string.
@@ -382,34 +447,38 @@ def get_device_info_json(nm, host):
 
 #-----------------#
 # Updates existing device information in the database if it has changed.
-def update_device_info(cursor, status, device_info_json, host, existing_info, address, mac_address):
-    # Check if the existing device information is different from the new information
-    if existing_info != device_info_json:
-        # Execute an SQL UPDATE statement to update the device's status and information in the database
-        try:
-            cursor.execute(
-                "UPDATE scans SET status = %s, device_info = %s, timestamp = CURRENT_TIMESTAMP, domain = %s, mac_address = %s WHERE ip = %s",
-                (status, device_info_json, address, mac_address, host)    # Parameters for the SQL query
-            )
-            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Updated information about " + Fore.GREEN + f"{host}")
-            cursor.connection.commit()
-        except Exception as e:
-            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
-
-
-#-----------------#
-# Inserts new device information into the database.
-def insert_device_info(cursor, status, device_info_json, host, address, mac_address):
-    # Execute an SQL INSERT statement to add a new device's information to the database
+def insert_device_info(cursor, status, device_info_json, host, address, network_address, mac_address):
+    # Attempt to insert device information into the database
     try:
         cursor.execute(
-            "INSERT INTO scans (ip, status, device_info, domain, mac_address) VALUES (%s, %s, %s, %s, %s)",
-            (host, status, device_info_json, address, mac_address)        # Parameters for the SQL query
+            "INSERT INTO scans (ip, status, device_info, domain, mac_address, network) VALUES (%s, %s, %s, %s, %s, %s)",
+            (host, status, device_info_json, address, mac_address, network_address)
         )
+        # Print a success message indicating the device information was inserted
         print(Fore.YELLOW + "[db]" + Fore.WHITE + " Inserted information about " + Fore.GREEN + f"{host}")
-        cursor.connection.commit()
+        cursor.connection.commit()  # Commit the transaction to the database
     except Exception as e:
+        # Print an error message if an exception occurs
         print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+
+def update_device_info(cursor, status, device_info_json, host, address, existing_info, network_address, mac_address):
+    # Check if the normalized device information has changed
+    if normalize_device_info(device_info_json) != normalize_device_info(existing_info):
+        # Attempt to update device information in the database
+        try:
+            cursor.execute(
+                "UPDATE scans SET status = %s, device_info = %s, timestamp = CURRENT_TIMESTAMP, domain = %s, mac_address = %s, network = %s WHERE ip = %s",
+                (status, device_info_json, address, mac_address, network_address, host)
+            )
+            # Print a success message indicating the device information was updated
+            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Updated information about " + Fore.GREEN + f"{host}")
+            cursor.connection.commit()  # Commit the transaction to the database
+        except Exception as e:
+            # Print an error message if an exception occurs
+            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+    else:
+        # Print a message indicating no changes were detected
+        print(Fore.YELLOW + "[db]" + Fore.WHITE + " No changes detected for " + Fore.GREEN + f"{host}")
 
 
 #-----------------#
@@ -436,12 +505,6 @@ def update_device_status(cursor, found_hosts):
 #-----------------#
 # Configures database and other settings based on user input.
 def configure_settings(db_host=None, db_user=None, db_password=None, db_name=None, flask_host=None, flask_port=None, flask_debug=None, default_network=None, default_ports=None, default_interval=None, spd_test=None):
-    
-
-    # random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
-    # api_key_string = f".netmonitor_{random_number}_config."  # Form the string for the key
-    # api_key = hashlib.md5(api_key_string.encode()).hexdigest()  # Calculate the MD5 hash
-
     # If the parameters are not passed, request from the user
     if db_host is None:
         print(Fore.YELLOW + "[Config]" + Fore.WHITE + " Configure your settings:")
@@ -502,25 +565,20 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
     with open('app/config.py', 'w') as config_file:
         config_file.write("import os\n\n")
         config_file.write("DB_CONFIG = ")
-        config_file.write(json.dumps(config_data["DB_CONFIG"], indent=4))       # Write DB_CONFIG section
+        config_file.write(json.dumps(config_data["DB_CONFIG"], indent=4))
         config_file.write("\n\n")
         config_file.write("VENV = {\n")
         config_file.write(f"    'PATH': os.path.join('.', 'venv'),\n")
         config_file.write(f"    'API_KEY': '',\n")
-        config_file.write(f"    'VERSION': '{config_data['VENV']['VERSION']}'\n")            # Write VENV section
+        config_file.write(f"    'VERSION': '{config_data['VENV']['VERSION']}'\n")
         config_file.write("}\n\n")
         config_file.write("FLASK_CONFIG = ")
-        config_file.write(f"{{'HOST': '{flask_host}', 'PORT': {flask_port}, 'DEBUG': {str(flask_debug).capitalize()}}}\n")  # Write FLASK_CONFIG section
+        config_file.write(f"{{'HOST': '{flask_host}', 'PORT': {flask_port}, 'DEBUG': {str(flask_debug).capitalize()}}}\n")
         config_file.write("\nSCAN_CONFIG = ")
         config_file.write(f"{{\n    'DEFAULT_NETWORK': '{default_network}',\n    'DEFAULT_PORTS': '{default_ports}',\n    'DEFAULT_INTERVAL': {default_interval},\n    'SPD_TEST': {str(spd_test).capitalize()}\n}}\n")
-        
-        # config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))     # Write SCAN_CONFIG section
 
     print(Fore.GREEN + "[Config]" + Fore.WHITE + " Configuration saved to config.py.")
     print(Fore.GREEN + "[API]" + Fore.WHITE + " API available at http://" + flask_host + ":" + str(flask_port) + "/")
-    # print(Fore.GREEN + "==========================================================" + Fore.WHITE)
-    # print(Fore.GREEN + "[Config]" + Fore.WHITE + " Your API key is: " + Fore.YELLOW + api_key + Fore.WHITE)
-    # print(Fore.GREEN + "==========================================================" + Fore.WHITE)
     generate_api_key()
 
 #-----------------#
