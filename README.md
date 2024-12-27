@@ -13,9 +13,13 @@
 ## 👉 [DockerHub repository](https://hub.docker.com/r/dekimasc/networkmonitor)
 
 ## Installation in using `Docker`:
-
+- Clone repository
+  ```
+  git clone https://github.com/QueenDekim/NetworkMonitor.git
+  cd NetworkMonitor
+  ```
 - Installation in using `docker-compose`:<br>
-    Create a new file named `docker-compose.yml` with the following content:
+    Edit a file named `docker-compose.yml` with the following content:
     ```yml
     services:
       app:
