@@ -21,11 +21,14 @@ import speedtest                                                    # Import the
 from getmac import get_mac_address                                  # Import get_mac_address to retrieve MAC addresses of devices
 from datetime import datetime                                       # Import datetime for working with dates and times
 import ipaddress                                                    # Import ipaddress for working with IP addresses
+from tqdm import tqdm
 
 #-----------------#
 # Global variables to manage the API process state
 process = None          # Global variable to hold the reference to the API process
 api_started = False     # Global flag to indicate whether the API has been started
+current_date = datetime.now().strftime("%Y.%m.%d")
+log_file_path = f'logs/flask_{current_date}.log'
 
 #-----------------#
 # Function to clear the console screen based on the operating system.
@@ -39,7 +42,6 @@ def clear_console():
 #-----------------#
 # Context manager for managing database connections.
 class DatabaseConnection:
-
     def __init__(self):
         # Initialize connection and cursor as None
         self.connection = None
@@ -60,17 +62,17 @@ class DatabaseConnection:
             )
             # Create a cursor object to interact with the database
             self.cursor = self.connection.cursor()
-            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database connection established.")
+            tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Database connection established.")
             if self.cursor:
                 return self.cursor      # Return the cursor for use in the with statement
         except pymysql.err.OperationalError as e:
-            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
+            tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
             return None                 # Return None to indicate the connection failed
         except UnicodeEncodeError:
             # Handle the case where the password cannot be encoded
-            print(Fore.RED + "[db]" + Fore.WHITE + " Error: unable to encode password")
+            tqdm.write(Fore.RED + "[db]" + Fore.WHITE + " Error: unable to encode password")
         except Exception as e:
-            print(Fore.RED + "[db]" + Fore.WHITE + f" An error occurred: {e}")
+            tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" An error occurred: {e}")
             return None                 # Return None to indicate the connection failed
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -79,36 +81,36 @@ class DatabaseConnection:
             self.cursor.close()         # Close the cursor if it exists
         if self.connection:
             self.connection.close()     # Close the database connection if it exists
-        print(Fore.YELLOW + "[db]" + Fore.WHITE + " Connection closed.")
+        tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Connection closed.")
 
 #-----------------#
 # Initializes the database and the scans table if they do not exist.
 def initialize_database(cursor):
     try:
-        print(Fore.YELLOW + "[db]" + Fore.WHITE + " Checking MySQL status...")
+        tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Checking MySQL status...")
         cursor.execute("SHOW DATABASES;")  # Run a simple request to verify the connection
         if cursor:
-            print(Fore.YELLOW + "[db]" + Fore.WHITE + " MySQL is running.")
+            tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " MySQL is running.")
             # Check if the database exists
-            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Cheking database...")
+            tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Cheking database...")
             cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
             result = cursor.fetchone()
             
             if not result:
                 # Create the database if it does not exist
                 cursor.execute("CREATE DATABASE network_monitoring")
-                print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
+                tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
             else:
-                print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' exists.")
+                tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' exists.")
             
             # Switch to the network_monitoring database
             try:
                 cursor.execute("USE network_monitoring")
             except Exception as e:
-                print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+                tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
 
             
-            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Cheking database table...")
+            tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Cheking database table...")
             # Check if the scans table exists
             try:
                 cursor.execute("SHOW TABLES LIKE 'scans'")
@@ -128,17 +130,17 @@ def initialize_database(cursor):
                             network VARCHAR(18) DEFAULT 'None'
                         )
                     """)
-                    print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
+                    tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
                 else: 
-                    print(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' exists.")
+                    tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' exists.")
             except Exception as e:
-                print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+                tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
             # If the request is successful, exit the loop
     except pymysql.err.OperationalError:
-        print(Fore.RED + "[db]" + Fore.WHITE + " MySQL is not available. Retrying in 5 seconds...")
+        tqdm.write(Fore.RED + "[db]" + Fore.WHITE + " MySQL is not available. Retrying in 5 seconds...")
         time.sleep(5)  # Wait 5 seconds before trying again   
     except Exception as e:
-        print(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
+        tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
 
 #-----------------#
 # Speedtest.
@@ -152,11 +154,11 @@ def spd_test():
         st.get_servers([])          # Retrieve the list of servers (empty list means use default)
         ping = st.results.ping      # Get the ping result
 
-        print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Download speed: {humansize(ds)}")    # Print the download speed in a human-readable format
-        print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Upload speed: {humansize(us)}")      # Print the upload speed in a human-readable format
-        print(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Ping: {ping} ms")                    # Print the ping result in milliseconds
+        tqdm.write(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Download speed: {humansize(ds)}")    # Print the download speed in a human-readable format
+        tqdm.write(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Upload speed: {humansize(us)}")      # Print the upload speed in a human-readable format
+        tqdm.write(Fore.GREEN + "[Speedtest]" + Fore.WHITE + f" Ping: {ping} ms")                    # Print the ping result in milliseconds
     except Exception as e:
-        print(Fore.RED + "[Speedtest]" + Fore.WHITE + f" Error: {e}")                           # Print an error message if an exception occurs during the speed test
+        tqdm.write(Fore.RED + "[Speedtest]" + Fore.WHITE + f" Error: {e}")                           # Print an error message if an exception occurs during the speed test
 
 def humansize(nbytes):
     """
@@ -179,6 +181,15 @@ def humansize(nbytes):
     f = ('%.2f' % nbytes).rstrip('0').rstrip('.')   # Format the number to two decimal places and remove trailing zeros
     return '%s %s' % (f, suffixes[i])               # Return the formatted size with the appropriate suffix
 
+#-----------------#
+# Get data for logfile
+def get_log_file():
+    global current_date, log_file_path
+    new_date = datetime.now().strftime("%Y.%m.%d")
+    if new_date != current_date:
+        current_date = new_date
+        log_file_path = f'logs/flask_{current_date}.log'
+    return log_file_path
 
 #-----------------#
 # Starts the REST API as a subprocess.
@@ -196,21 +207,22 @@ def start_api():
         if not os.path.exists('logs'):
             os.makedirs('logs')  # Create the logs directory
 
-        current_date = datetime.now().strftime("%Y.%m.%d")
+        # current_date = datetime.now().strftime("%Y.%m.%d")
+        # log_file_path = f'logs/flask_{current_date}.log'
         # Open the log file for writing
-        with open(f'logs/flask_{current_date}.log', 'a') as log_file:
+        with open(get_log_file(), 'a') as log_file:
             # Start the REST API as a subprocess, redirecting stdout and stderr to the log file
             process = subprocess.Popen(
                 [python_executable, 'app/rest_api.py'],
                 stdout=log_file,
                 stderr=log_file
             )
-            print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API started at " + Fore.CYAN + f"http://{FLASK_CONFIG['HOST']}:{FLASK_CONFIG['PORT']}" + Fore.WHITE)
+            tqdm.write(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API started at " + Fore.CYAN + f"http://{FLASK_CONFIG['HOST']}:{FLASK_CONFIG['PORT']}" + Fore.WHITE)
         
         api_started = True      # Set the api_started flag to True indicating the API has started
         return 0
     except Exception as e:
-        print(Fore.RED + "[ERR]" + Fore.WHITE + f" Failed to start 'rest_api.py'. {e}")
+        tqdm.write(Fore.RED + "[ERR]" + Fore.WHITE + f" Failed to start 'rest_api.py'. {e}")
         api_started = False     # Set the api_started flag to False indicating the API did not start
         return 1
     
@@ -222,17 +234,16 @@ def get_user_input(prompt, default_value=None):
         return user_input if user_input else default_value      # Return the user input if it's provided; otherwise, return the default value
     except KeyboardInterrupt:
         # Handle the case where the user interrupts the input (Ctrl+C)
-        print("\nInterrupted by user. Exiting...")
+        tqdm.write("\nInterrupted by user. Exiting...")
         return None                                             # Return None to indicate the operation was interrupted
     except EOFError:
         # Handle the case where an end-of-file is reached (Ctrl+D)
-        print("\nEnd of file reached. Exiting...")
+        tqdm.write("\nEnd of file reached. Exiting...")
         return None                                             # Return None to indicate the operation was interrupted
 
 #-----------------#
 # Terminates the running API process if it is active.
 def terminate_api():
-
     # Declare global variable to track the API status
     global api_started
     # Check if the API is currently running
@@ -241,19 +252,18 @@ def terminate_api():
             process.terminate()     # Terminate the API process
             process.wait()          # Wait for the process to terminate completely
             time.sleep(5)           # Sleep for a short duration to ensure the process has fully terminated
-            print(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API process terminated.")
+            tqdm.write(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API process terminated.")
             api_started = False     # Set the api_started flag to False to indicate the API is no longer running
             return 0
         except KeyboardInterrupt:
             # Handle the case where the termination is interrupted by the user
-            print(Fore.RED + "[ERR]" + Fore.WHITE + " Failed to terminate the API process.")
+            tqdm.write(Fore.RED + "[ERR]" + Fore.WHITE + " Failed to terminate the API process.")
             return 1
 
 #-----------------#
 # Parses the network range string and generates a list of individual networks.
 def parse_network_range(network_range):
     networks = []
-    
     # Split the ranges by space
     for net in network_range.split():
         net = net.strip()
@@ -285,19 +295,22 @@ def parse_network_range(network_range):
 def scan_network(network_range, ports):
     # Generate all networks from the range
     networks = parse_network_range(network_range)
-
-    for network in networks:
-        nm = initialize_nmap()  # Initialize nmap
-        if not nm:
-            return
-        
-        # Perform scanning for each network
-        if not perform_scan(nm, network, ports):
-            return
-        
-        with DatabaseConnection() as cursor:
-            process_scan_results(nm, cursor, network)  # Passing the current network
-
+    
+    total_hosts = len(networks)
+    with tqdm(total=total_hosts, desc=f"{Fore.CYAN}Scanning", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}]" + Fore.WHITE, ncols=100, leave=True) as pbar:
+        for network in networks:
+            nm = initialize_nmap()  # Initialize nmap
+            if not nm:
+                return
+            # Perform scanning for each network
+            if not perform_scan(nm, network, ports):
+                return
+            
+            with DatabaseConnection() as cursor:
+                process_scan_results(nm, cursor, network)  # Passing the current network
+            
+            pbar.update(1)
+            
 #-----------------#
 # Initializes and returns an nmap PortScanner instance.
 def initialize_nmap():
@@ -306,7 +319,7 @@ def initialize_nmap():
         return nmap.PortScanner()       # Return the PortScanner instance if successful
     except Exception as e:
         # Handle the case where Nmap is not installed or another error occurs
-        print(Fore.RED + "[ERR]" + Fore.WHITE + f" nmap not installed. Please install nmap and try again.\nTracelog:\n{e}")
+        tqdm.write(Fore.RED + "[ERR]" + Fore.WHITE + f" nmap not installed. Please install nmap and try again.\nTracelog:\n{e}")
         return None                     # Return None to indicate that initialization failed
 
 #-----------------#
@@ -314,15 +327,15 @@ def initialize_nmap():
 def perform_scan(nm, network, ports):
     # Attempt to perform a network scan using the provided Nmap instance
     try:
-        print(Fore.YELLOW + "[nmap]" + Fore.WHITE + f" Starting scan on network {Fore.GREEN}{network}{Fore.WHITE} with ports {Fore.GREEN}{ports}...")
+        tqdm.write(Fore.YELLOW + "[nmap]" + Fore.WHITE + f" Starting scan on network {Fore.GREEN}{network}{Fore.WHITE} with ports {Fore.GREEN}{ports}{Fore.WHITE}...")
         # Execute the scan with version detection, specified ports, and a fast timing template
         nm.scan(hosts=network, arguments=f'-sV -p {ports} -T5 --unprivileged', timeout=1200)
         
-        print(Fore.YELLOW + "[nmap]" + Fore.WHITE + " Scan completed.")
+        tqdm.write(Fore.YELLOW + "[nmap]" + Fore.WHITE + " Scan completed.")
         return True     # Return True to indicate the scan was successful
     except Exception as e:
         # Print an error message if an exception occurs during the scan
-        print(Fore.RED + "[nmap]" + Fore.WHITE + f" Error during scanning: {e}")
+        tqdm.write(Fore.RED + "[nmap]" + Fore.WHITE + f" Error during scanning: {e}")
         return False    # Return False to indicate the scan failed
 
 def normalize_device_info(device_info):
@@ -343,7 +356,6 @@ def normalize_device_info(device_info):
         "hostname": device_info_dict.get("hostname", ""),
         "ports": sorted(device_info_dict.get("ports", []), key=lambda x: x['port'])
     }
-    
     # Serialize back to a string with sorted keys
     return json.dumps(normalized_info, sort_keys=True)
 
@@ -352,7 +364,7 @@ def normalize_device_info(device_info):
 def process_scan_results(nm, cursor, network):
     # Check if the database cursor is available
     if cursor is None:
-        print(Fore.RED + "[db]" + Fore.WHITE + " No database cursor available. Exiting process scan results.")
+        tqdm.write(Fore.RED + "[db]" + Fore.WHITE + " No database cursor available. Exiting process scan results.")
         return
     
     found_hosts = set()  # Initialize a set to keep track of found hosts
@@ -364,25 +376,25 @@ def process_scan_results(nm, cursor, network):
         
         # Get the network address from the provided network
         network_address = str(ipaddress.ip_network(f"{network}", strict=False).network_address)
-        print(Fore.YELLOW + "[network]" + Fore.WHITE + f" Network address: {Fore.GREEN}{network_address}")
+        tqdm.write(Fore.YELLOW + "[network]" + Fore.WHITE + f" Network address: {Fore.GREEN}{network_address}")
         
         try:
             # Attempt to get the MAC address of the host
             mac_address = get_mac_address(ip=host)
             if mac_address:
-                print(Fore.YELLOW + "[mac]" + Fore.WHITE + f" Found MAC address {Fore.GREEN}{mac_address}{Fore.WHITE} for host {Fore.GREEN}{host}")
+                tqdm.write(Fore.YELLOW + "[mac]" + Fore.WHITE + f" Found MAC address {Fore.GREEN}{mac_address}{Fore.WHITE} for host {Fore.GREEN}{host}")
             else:
-                print(Fore.YELLOW + "[mac]" + Fore.WHITE + f" MAC address for the host {Fore.GREEN}{host}{Fore.WHITE} was not found")
+                tqdm.write(Fore.YELLOW + "[mac]" + Fore.WHITE + f" MAC address for the host {Fore.GREEN}{host}{Fore.WHITE} was not found")
                 mac_address = "None"  # Set MAC address to None if not found
 
             try:    
                 # Attempt to get the domain name associated with the host
                 addr = socket.gethostbyaddr(host)
                 address = addr[0]  # Get the domain name
-                print(Fore.YELLOW + "[socket]" + Fore.WHITE + f"Found domain name {Fore.GREEN}{addr[0]}{Fore.WHITE} on host {Fore.GREEN}{host}{Fore.WHITE}")
+                tqdm.write(Fore.YELLOW + "[socket]" + Fore.WHITE + f"Found domain name {Fore.GREEN}{addr[0]}{Fore.WHITE} on host {Fore.GREEN}{host}{Fore.WHITE}")
             except:
                 address = "None"  # Set address to None if not found
-                print(Fore.YELLOW + "[socket]" + Fore.WHITE + f" No domain name found on host {Fore.GREEN}{host}")
+                tqdm.write(Fore.YELLOW + "[socket]" + Fore.WHITE + f" No domain name found on host {Fore.GREEN}{host}")
                 
             # Check if the device already exists in the database
             cursor.execute("SELECT device_info FROM scans WHERE ip = %s", (host,))
@@ -398,16 +410,16 @@ def process_scan_results(nm, cursor, network):
             found_hosts.add(host)  # Add the host to the found hosts set
 
         except Exception as e:
-            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")  # Print any errors encountered
+            tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")  # Print any errors encountered
 
     try:
+        network_address = str(ipaddress.ip_network(f"{network}", strict=False).network_address)
         # Update the status of devices in the database
-        update_device_status(cursor, found_hosts)
+        update_device_status(cursor, found_hosts, network_address)
         cursor.connection.commit()  # Commit the changes to the database
-        print(Fore.YELLOW + "[db]" + Fore.WHITE + " Database updated successfully.")
+        tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Database updated successfully.")
     except Exception as e:
-        print(Fore.RED + "[db]" + Fore.WHITE + f" Error updating device status: {e}")  # Print any errors encountered during update
-    
+        tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error updating device status: {e}")  # Print any errors encountered during update
 
 #-----------------#
 # Collects device information and returns it as a JSON string.
@@ -458,11 +470,11 @@ def insert_device_info(cursor, status, device_info_json, host, address, network_
             (host, status, device_info_json, address, mac_address, network_address)
         )
         # Print a success message indicating the device information was inserted
-        print(Fore.YELLOW + "[db]" + Fore.WHITE + " Inserted information about " + Fore.GREEN + f"{host}")
+        tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Inserted information about " + Fore.GREEN + f"{host}")
         cursor.connection.commit()  # Commit the transaction to the database
     except Exception as e:
         # Print an error message if an exception occurs
-        print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+        tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
 
 def update_device_info(cursor, status, device_info_json, host, address, existing_info, network_address, mac_address):
     # Check if the normalized device information has changed
@@ -474,25 +486,24 @@ def update_device_info(cursor, status, device_info_json, host, address, existing
                 (status, device_info_json, address, mac_address, network_address, host)
             )
             # Print a success message indicating the device information was updated
-            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Updated information about " + Fore.GREEN + f"{host}")
+            tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Updated information about " + Fore.GREEN + f"{host}")
             cursor.connection.commit()  # Commit the transaction to the database
         except Exception as e:
             # Print an error message if an exception occurs
-            print(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
+            tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
     else:
         # Print a message indicating no changes were detected
-        print(Fore.YELLOW + "[db]" + Fore.WHITE + " No changes detected for " + Fore.GREEN + f"{host}")
-
+        tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " No changes detected for " + Fore.GREEN + f"{host}")
 
 #-----------------#
 # Updates the status of devices that were not found in the current scan.
-def update_device_status(cursor, found_hosts):
+def update_device_status(cursor, found_hosts, network_address):
     # Execute an SQL SELECT statement to retrieve all IP addresses from the scans table
     try:
         cursor.execute("SELECT ip FROM scans")
         all_hosts = cursor.fetchall()       # Fetch all results from the executed query
     except Exception as e:
-        print(Fore.RED + "[db]" + Fore.WHITE + " Error retrieving all hosts: " + str(e))
+        tqdm.write(Fore.RED + "[db]" + Fore.WHITE + " Error retrieving all hosts: " + str(e))
         return None
     
     # Iterate over each IP address retrieved from the database
@@ -510,7 +521,7 @@ def update_device_status(cursor, found_hosts):
 def configure_settings(db_host=None, db_user=None, db_password=None, db_name=None, flask_host=None, flask_port=None, flask_debug=None, default_network=None, default_ports=None, default_interval=None, spd_test=None):
     # If the parameters are not passed, request from the user
     if db_host is None:
-        print(Fore.YELLOW + "[Config]" + Fore.WHITE + " Configure your settings:")
+        tqdm.write(Fore.YELLOW + "[Config]" + Fore.WHITE + " Configure your settings:")
         db_host = get_user_input(f"Database Host (default: {DB_CONFIG['host']}): ", f"{DB_CONFIG['host']}")
     if db_user is None:
         db_user = get_user_input(f"Database User (default: {DB_CONFIG['user']}): ", f"{DB_CONFIG['user']}")
@@ -528,7 +539,7 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         
     # Prompt for default scan values
     if default_network is None:
-        print(Fore.GREEN + "Default values: " + Fore.WHITE)
+        tqdm.write(Fore.GREEN + "Default values: " + Fore.WHITE)
         default_network = get_user_input(f"Default Network to Scan (default: {SCAN_CONFIG['DEFAULT_NETWORK']}): ", f"{SCAN_CONFIG['DEFAULT_NETWORK']}")
     if default_ports is None:
         default_ports = get_user_input(f"Default Ports to Scan (default: {SCAN_CONFIG['DEFAULT_PORTS']}): ", f"{SCAN_CONFIG['DEFAULT_PORTS']}")
@@ -580,8 +591,8 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
         config_file.write("\nSCAN_CONFIG = ")
         config_file.write(f"{{\n    'DEFAULT_NETWORK': '{default_network}',\n    'DEFAULT_PORTS': '{default_ports}',\n    'DEFAULT_INTERVAL': {default_interval},\n    'SPD_TEST': {str(spd_test).capitalize()}\n}}\n")
 
-    print(Fore.GREEN + "[Config]" + Fore.WHITE + " Configuration saved to config.py.")
-    print(Fore.GREEN + "[API]" + Fore.WHITE + " API available at http://" + flask_host + ":" + str(flask_port) + "/")
+    tqdm.write(Fore.GREEN + "[Config]" + Fore.WHITE + " Configuration saved to config.py.")
+    tqdm.write(Fore.GREEN + "[API]" + Fore.WHITE + " API available at http://" + flask_host + ":" + str(flask_port) + "/")
     generate_api_key()
 
 #-----------------#
@@ -592,9 +603,9 @@ def generate_api_key():
     random_number = random.randint(100000000, 999999999)  # Generate a random 9-digit number
     api_key_string = f".netmonitor_{random_number}_config."  # Form the string for the key
     api_key = hashlib.md5(api_key_string.encode()).hexdigest()  # Calculate the MD5 hash
-    print(Fore.CYAN + "=============================================================" + Fore.WHITE)
-    print(Fore.GREEN + "[API Key]" + Fore.WHITE + " Generated API Key: " + Fore.CYAN + f"{api_key}" + Fore.WHITE)
-    print(Fore.CYAN + "============================================================="  + Fore.WHITE)
+    tqdm.write(Fore.CYAN + "=============================================================" + Fore.WHITE)
+    tqdm.write(Fore.GREEN + "[API Key]" + Fore.WHITE + " Generated API Key: " + Fore.CYAN + f"{api_key}" + Fore.WHITE)
+    tqdm.write(Fore.CYAN + "============================================================="  + Fore.WHITE)
 
     # Load the existing config.py
     config_data = {}
@@ -625,9 +636,8 @@ def generate_api_key():
         config_file.write(f"    'DEFAULT_INTERVAL': {config_data['SCAN_CONFIG']['DEFAULT_INTERVAL']},\n")
         config_file.write(f"    'SPD_TEST': {str(config_data['SCAN_CONFIG']['SPD_TEST']).capitalize()}\n")
         config_file.write("}")
-        # config_file.write(json.dumps(config_data["SCAN_CONFIG"], indent=4))  # Write SCAN_CONFIG
 
-    print(Fore.GREEN + "[Config]" + Fore.WHITE + " API Key saved to config.py.")
+    tqdm.write(Fore.GREEN + "[Config]" + Fore.WHITE + " API Key saved to config.py.")
 
 if __name__ == "__main__":
     # Creating a Command Line Argument parser
@@ -664,32 +674,32 @@ if __name__ == "__main__":
 
     # Check for mutually exclusive arguments
     if args.config and args.scan:
-        print(Fore.RED + "[Error]" + Fore.WHITE + " You cannot use --config and --scan together.")
+        tqdm.write(Fore.RED + "[Error]" + Fore.WHITE + " You cannot use --config and --scan together.")
         exit(1)
 
     # If configuration arguments are provided
     if args.config:
         # Check if all required configuration arguments are provided
         if not all([args.db_host, args.db_user, args.db_password, args.db_name, args.flask_host, args.flask_port, args.flask_debug]):
-            print(Fore.RED + "[Error]" + Fore.WHITE + " Missing required configuration arguments.")
+            tqdm.write(Fore.RED + "[Error]" + Fore.WHITE + " Missing required configuration arguments.")
             exit(1)
 
         logo = text2art(
             '''NetworkMonitor
             by DekimDev''', "colossal"
         )
-        print(Fore.CYAN + logo + Fore.WHITE)
-        print(Fore.CYAN + "-------------" + Fore.WHITE)
-        print(Fore.GREEN + "Version " + VENV["VERSION"] + Fore.WHITE)
-        print(Fore.CYAN + "-------------" + Fore.WHITE)
-        print("")
-        print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting configuration with provided parameters...")
+        tqdm.write(Fore.CYAN + logo + Fore.WHITE)
+        tqdm.write(Fore.CYAN + "-------------" + Fore.WHITE)
+        tqdm.write(Fore.GREEN + "Version " + VENV["VERSION"] + Fore.WHITE)
+        tqdm.write(Fore.CYAN + "-------------" + Fore.WHITE)
+        tqdm.write("")
+        tqdm.write(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting configuration with provided parameters...")
         try:
             # Ensure SPD_TEST is capitalized
             spd_test_value = str(args.spd_test).capitalize() if args.spd_test is not None else None
             
             configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval, spd_test_value)
-            print(Fore.YELLOW + "[db]" + Fore.WHITE + " Creating database if not exist...")
+            tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Creating database if not exist...")
             with DatabaseConnection() as cursor:
                 importlib.reload(config)
                 DB_CONFIG = config.DB_CONFIG
@@ -697,27 +707,27 @@ if __name__ == "__main__":
                 FLASK_CONFIG = config.FLASK_CONFIG
                 SCAN_CONFIG = config.SCAN_CONFIG
                 initialize_database(cursor)  # Initialize the database and table
-            print(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
+            tqdm.write(Fore.GREEN + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 0")
             exit(0)
         except Exception as e:
-            print(Fore.RED + "[Error]" + Fore.WHITE + f" An error occurred during configuration: {e}")
-            print(Fore.RED + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 1")
+            tqdm.write(Fore.RED + "[Error]" + Fore.WHITE + f" An error occurred during configuration: {e}")
+            tqdm.write(Fore.RED + "[EXIT]" + Fore.WHITE + f" Configurator exited with code 1")
             exit(1)
 
     # If scan arguments are provided
     if args.scan:
         # Check if all required scan arguments are provided
         if not all([args.network, args.ports, args.interval]):
-            print(Fore.RED + "[Error]" + Fore.WHITE + " Missing required scan arguments.")
+            tqdm.write(Fore.RED + "[Error]" + Fore.WHITE + " Missing required scan arguments.")
             exit(1)
 
-        print(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting scan with provided parameters...")
+        tqdm.write(Fore.YELLOW + "[Info]" + Fore.WHITE + " Starting scan with provided parameters...")
         start_api()  # Launching the API
         try:
             # Use a database connection to initialize the database and table
             try:
                 if SCAN_CONFIG["SPD_TEST"]:
-                    print(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
+                    tqdm.write(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
                     spd_test()
                 with DatabaseConnection() as cursor:
                     importlib.reload(config)
@@ -727,18 +737,18 @@ if __name__ == "__main__":
                     SCAN_CONFIG = config.SCAN_CONFIG
                     initialize_database(cursor)  # Initialize the database and table                    
             except pymysql.err.OperationalError as e:
-                print(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
+                tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
                         
             while True:
                 scan_network(args.network, args.ports)  # Performing a network scan
                 wait_time = args.interval * 60  # We calculate the waiting time in seconds
                 if args.interval < 1:
-                    print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
+                    tqdm.write(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
                 else:
-                    print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
+                    tqdm.write(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
                 time.sleep(wait_time)  # Waiting for the specified time before the next scan
         except KeyboardInterrupt:
-            print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
+            tqdm.write(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
             terminate_api()  # Completing the API process if it is running
 
     # Handle case where no valid arguments are provided
@@ -747,16 +757,16 @@ if __name__ == "__main__":
         # Start of the main program execution
         try:
             clear_console()
-            print("")
+            tqdm.write("")
             logo = text2art(
                 '''NetworkMonitor
                 by DekimDev''', "colossal"
             )
-            print(Fore.CYAN + logo + Fore.WHITE)
-            print(Fore.CYAN + "-------------" + Fore.WHITE)
-            print(Fore.GREEN + "Version " + VENV["VERSION"] + Fore.WHITE)
-            print(Fore.CYAN + "-------------" + Fore.WHITE)
-            print("")
+            tqdm.write(Fore.CYAN + logo + Fore.WHITE)
+            tqdm.write(Fore.CYAN + "-------------" + Fore.WHITE)
+            tqdm.write(Fore.GREEN + "Version " + VENV["VERSION"] + Fore.WHITE)
+            tqdm.write(Fore.CYAN + "-------------" + Fore.WHITE)
+            tqdm.write("")
             # Infinite loop to continuously prompt the user for an action
             while True:
                 # Get user input for choosing an option (configure or scan)
@@ -781,7 +791,7 @@ if __name__ == "__main__":
 
                     try:
                         if SCAN_CONFIG["SPD_TEST"]:
-                            print(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
+                            tqdm.write(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
                             spd_test()
                         
                         # Infinite loop to perform scanning at specified intervals
@@ -789,30 +799,30 @@ if __name__ == "__main__":
                             scan_network(network, ports)        # Perform the network scan
                             wait_time = float(interval) * 60    # Calculate wait time in seconds
                             if interval < 1:
-                                print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
+                                tqdm.write(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
                             else:
-                                print(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
+                                tqdm.write(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time / 60} minutes before next scan...")
                             time.sleep(wait_time)               # Wait for the specified interval before the next scan
                     except KeyboardInterrupt:
                         # Handle the case where the scan is interrupted by the user
-                        print(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
+                        tqdm.write(Fore.YELLOW + "\nScan interrupted by user. Exiting...")
                         terminate_api()                         # Terminate the API process if running
                 elif choice == "3":
                     generate_api_key()
                 elif choice == "4":
-                    print(Fore.YELLOW + "============================================" + Fore.WHITE)
-                    print(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
+                    tqdm.write(Fore.YELLOW + "============================================" + Fore.WHITE)
+                    tqdm.write(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
                     spd_test()
-                    print(Fore.YELLOW + "============================================" + Fore.WHITE)
+                    tqdm.write(Fore.YELLOW + "============================================" + Fore.WHITE)
                 elif choice == "5":
-                    print(Fore.YELLOW + "Exiting..." + Fore.WHITE)
+                    tqdm.write(Fore.YELLOW + "Exiting..." + Fore.WHITE)
                     exit()
                 else:
                     # Handle invalid user input
-                    print(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1-5.")
+                    tqdm.write(Fore.RED + "[ERR]" + Fore.WHITE + " Invalid choice. Please enter 1-5.")
         except KeyboardInterrupt:
             # Handle the case where the program is interrupted by the user
-            print("\nProgram interrupted by user. Exiting...")
+            tqdm.write("\nProgram interrupted by user. Exiting...")
         finally:
             # Ensure the API process is terminated when exiting the program
             terminate_api()     # Terminate the API process if running

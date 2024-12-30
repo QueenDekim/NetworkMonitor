@@ -92,74 +92,74 @@ def get_ports_by_ip(ip):
         cursor.execute("SELECT device_info FROM scans WHERE ip = %s", (ip,))
         row = cursor.fetchone()
         if row:
-            return json.loads(row[0])['ports']  # Предполагается, что device_info хранит JSON
+            return json.loads(row[0])['ports']
         return None
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error: {e}")  # Print the error message if an exception occurs
         return None
     finally:
-        cursor.close()
-        conn.close()
+        cursor.close()  # Close the cursor
+        conn.close()    # Close the database connection
 
 def fetch_scan_data():
     """
-    Получение данных о сканах из базы данных.
+    Fetch scan data from the database.
     
     Returns:
-        list: Список записей о сканах.
+        list: A list of scan records.
     """
     conn = connect_to_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM scans ORDER BY id ASC")
-    scans = cursor.fetchall()
-    cursor.close()
-    conn.close()
+    scans = cursor.fetchall()  # Fetch all scan records
+    cursor.close()  # Close the cursor
+    conn.close()    # Close the database connection
     return scans
 
 def generate_pdf_report(scans):
     """
-    Генерация PDF отчета на основе данных о сканах.
+    Generate a PDF report based on scan data.
     
     Args:
-        scans (list): Список записей о сканах.
+        scans (list): A list of scan records.
     
     Returns:
-        str: Путь к сгенерированному PDF файлу.
+        str: The path to the generated PDF file.
     """
-    # Создаем PDF отчет
+    # Create a PDF report
     pdf = FPDF()
     pdf.add_page()
     
-    # Устанавливаем встроенный шрифт Arial
+    # Set the built-in Arial font
     pdf.set_font("Arial", size=10)
 
-    # Заголовок отчета
-    pdf.cell(200, 10, txt="Network Scan Report", ln=True, align='C')  # Заголовок на английском
-    pdf.cell(200, 10, txt="", ln=True)  # Пустая строка
+    # Report title
+    pdf.cell(200, 10, txt="Network Scan Report", ln=True, align='C')  # Title in English
+    pdf.cell(200, 10, txt="", ln=True)  # Empty line
 
-    # Информация о количестве хостов
+    # Information about the number of hosts
     up_hosts = [scan for scan in scans if scan[2] == 'up']
     down_hosts = [scan for scan in scans if scan[2] == 'down']
     up_count = len(up_hosts)
     down_count = len(down_hosts)
-    pdf.cell(0, 10, txt=f"Number of hosts found: Up - {up_count}, Down - {down_count}", ln=True)  # Информация на английском
-    pdf.cell(200, 10, txt="", ln=True)  # Пустая строка
+    pdf.cell(0, 10, txt=f"Number of hosts found: Up - {up_count}, Down - {down_count}", ln=True)  # Information in English
+    pdf.cell(200, 10, txt="", ln=True)  # Empty line
 
-    # Добавляем данные о сканах
+    # Add scan data
     for scan in scans:
-        # Преобразуем текст в латиницу или используем только поддерживаемые символы
+        # Convert text to Latin or use only supported characters
         pdf.cell(0, 10, txt=f"IP: {scan[1]}, Status: {scan[2]}, Date: {scan[4]}", ln=True)
 
-        # Получаем информацию о портах для текущего хоста
-        device_info = json.loads(scan[3])  # Предполагается, что device_info хранит JSON
+        # Get port information for the current host
+        device_info = json.loads(scan[3])  # Assuming device_info stores JSON
         if 'ports' in device_info:
             pdf.cell(0, 10, txt="Ports:", ln=True)
             for port_info in device_info['ports']:
                 pdf.cell(0, 10, txt=f"{port_info['port']} | {port_info['name']} | {port_info['state']}", ln=True)
 
-        pdf.cell(200, 10, txt="", ln=True)  # Пустая строка
+        pdf.cell(200, 10, text="", ln=True)  # Empty line
 
-    # Сохраняем PDF файл
+    # Save the PDF file
     current_time = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
     report_path = os.path.join(os.path.dirname(__file__), f"reports/scan_report_{current_time}.pdf")
     pdf.output(report_path)
@@ -167,48 +167,46 @@ def generate_pdf_report(scans):
     return report_path
 
 def get_latest_log():
-    # Получаем текущую дату в формате YYYY.MM.DD
-    current_date = datetime.now().strftime("%Y.%m.%d")
-    # Формируем шаблон для поиска лог файлов
-    log_pattern = os.path.join('logs', f'flask_{current_date}.log')
-    # Находим все файлы, соответствующие шаблону
+    # Create a pattern to search for all log files
+    log_pattern = os.path.join('logs', 'flask_*.log')
+    # Find all files matching the pattern
     log_files = glob.glob(log_pattern)
     
     if not log_files:
-        return "Лог файл не найден.", 404  # Если лог файл не найден, возвращаем 404
+        return "Log file not found.", 404  # If no log file is found, return 404
     
-    # Получаем последний лог файл
+    # Get the latest log file
     latest_log_file = max(log_files, key=os.path.getctime)
     
-    # Читаем содержимое лог файла
+    # Read the contents of the log file
     with open(latest_log_file, 'r') as file:
         log_content = file.read()
     
-    return log_content, 200  # Возвращаем содержимое лог файла и статус 200
+    return log_content, 200  # Return the log file content and status 200
 
 def get_log_by_date(date):
-    # Формируем шаблон для поиска лог файлов по дате
+    # Create a pattern to search for log files by date
     log_pattern = os.path.join('logs', f'flask_{date}.log')
-    # Находим все файлы, соответствующие шаблону
+    # Find all files matching the pattern
     log_files = glob.glob(log_pattern)
     
     if not log_files:
-        return "Лог файл не найден.", 404  # Если лог файл не найден, возвращаем 404
+        return "Log file not found.", 404  # If no log file is found, return 404
     
-    # Получаем последний лог файл
+    # Get the latest log file
     latest_log_file = max(log_files, key=os.path.getctime)
     
-    # Читаем содержимое лог файла
+    # Read the contents of the log file
     with open(latest_log_file, 'r') as file:
         log_content = file.read()
     
-    return log_content, 200  # Возвращаем содержимое лог файла и статус 200
+    return log_content, 200  # Return the log file content and status 200
 
 def get_log_routes():
     return {
         "available_routes": [
-            "/api/logs/latest",
-            "/api/logs/<date>"
+            "/api/logs/latest",  # Route to get the latest log
+            "/api/logs/<date>"   # Route to get logs by specific date
         ]
     }
 
@@ -332,12 +330,13 @@ def terms_of_service():
 # def web_interface():
 #     return render_template('index.html')
 
-@app.route('/api/scans/ports/<string:ip>', methods=['GET'])
+@app.route('/api/scans/ports/<string:ip>', methods=['GET']) # Define the route for retrieving port information by IP address
 def get_ports(ip):
     """
     Get port information by IP address
     ---
     parameters:
+
       - name: ip
         in: path
         type: string
@@ -377,7 +376,7 @@ def get_ports(ip):
     else:
         return jsonify({"error": "Not found"}), 404
     
-@app.route('/api/scans/page/<int:page>', methods=['GET'])
+@app.route('/api/scans/page/<int:page>', methods=['GET']) # Define the route for paginated scan data
 def get_scans_paginated(page):
     """
     Get paginated scan data
@@ -507,7 +506,7 @@ def get_scan_by_ip(ip):
         else:                               # If the record is not found
             return jsonify({"error": "Not found"}), 404
 
-@app.route('/api/scans', methods=['POST'])  # Определяем маршрут для POST-запроса
+@app.route('/api/scans', methods=['POST'])  # Define the route for the POST request
 def create_or_update_scan():
     """
     Create a new scan or update an existing one
@@ -526,7 +525,6 @@ def create_or_update_scan():
           items:
             type: array
             items:
-                
                 oneOf:
                     - type: string
                       description: "Ip address"
@@ -554,7 +552,7 @@ def create_or_update_scan():
       500:
         description: Internal server error
     """
-    # Проверка авторизации
+    # Authorization check
     auth_header = request.headers.get('Authorization')
     if auth_header.__contains__("Bearer"):
         auth_header = auth_header.split("Bearer ")[1]
@@ -571,76 +569,77 @@ def create_or_update_scan():
     if not isinstance(scan_data, list) or not all(isinstance(item, list) for item in scan_data):
         return jsonify({"error": "Bad request"}), 400
 
-    # Обновление или создание записи
+    # Update or create a record
     if update_or_create_scan(scan_data):
         return jsonify({"message": "Scan created or updated successfully"}), 201
     else:
         return jsonify({"error": "Internal server error"}), 500
 
-@app.route('/api/report', methods=['GET'])
+@app.route('/api/report', methods=['GET'])  # Define the route for generating a report
 def generate_report():
     """
-    Генерация отчета о сканировании
+    Generate a scan report
     ---
     responses:
       200:
-        description: Отчет о сканировании в формате PDF
+        description: Scan report in PDF format
       500:
-        description: Внутренняя ошибка сервера
+        description: Internal server error
     """
     try:
-        # Получаем данные о сканах
+        # Get scan data
         scans = fetch_scan_data()
 
-        # Генерируем PDF отчет
+        # Generate PDF report
         report_path = generate_pdf_report(scans)
 
-        # Возвращаем PDF файл в ответе
+        # Return the PDF file in the response
         return send_file(report_path, as_attachment=True)
 
     except Exception as e:
         print(f"Error generating report: {e}")
         return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
-@app.route('/api/logs/latest', methods=['GET'])
+@app.route('/api/logs/latest', methods=['GET']) # Define the route for getting the latest log file
 def get_latest_log_route():
     """
-    Получить содержимое последнего лог файла
+    Get the content of the latest log file
     ---
     responses:
       200:
-        description: Содержимое лог файла
+        description: Log file content
       404:
-        description: Лог файл не найден
+        description: Log file not found
     """
     log_content, status_code = get_latest_log()
     return log_content, status_code
 
-@app.route('/api/logs/<string:date>', methods=['GET'])
+@app.route('/api/logs/<string:date>', methods=['GET'])  # Define the route for getting log files by date
 def get_log_by_date_route(date):
     """
-    Получить содержимое лог файла по дате
+    Get log file content by date
     ---
     parameters:
       - name: date
         in: path
         type: string
         required: true
-        description: Дата в формате yyyy.mm.dd
+        description: Date in the format yyyy.mm.dd
     responses:
       200:
-        description: Содержимое лог файла
+        description: Log file content
       404:
-        description: Лог файл не найден
+        description: Log file not found
     """
     log_content, status_code = get_log_by_date(date)
     return log_content, status_code
 
-@app.route('/api/logs', methods=['GET'])
+@app.route('/api/logs', methods=['GET'])  # Define the route for getting log routes
 def get_logs_route():
     routes = get_log_routes()
     return jsonify(routes), 200
 
+# Main block of the script
 if __name__ == '__main__':
     # Start the Flask application with the specified configuration settings
     app.run(debug=FLASK_CONFIG['DEBUG'],    # Enable or disable debug mode based on the configuration
