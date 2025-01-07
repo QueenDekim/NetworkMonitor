@@ -1,9 +1,9 @@
 <img src="./demo/docker-preview.png" />
 
 <p align="center" width="100%">
-    <img height="25px" src="https://img.shields.io/github/languages/top/QueenDekim/NetworkMonitor"> 
-    <img height="25px" src="https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits"> 
-    <img height="25px" src="https://img.shields.io/github/stars/QueenDekim/NetworkMonitor"> 
+    <img height="25px" src="https://img.shields.io/github/languages/top/QueenDekim/NetworkMonitor">
+    <img height="25px" src="https://img.shields.io/github/commit-activity/m/QueenDekim/NetworkMonitor?label=commits">
+    <img height="25px" src="https://img.shields.io/github/stars/QueenDekim/NetworkMonitor">
 </p>
 
 ---
@@ -24,6 +24,7 @@
     services:
       app:
         image: ghcr.io/queendekim/networkmonitor:latest
+        restart: always
         volumes:
           - ./app:/app
         depends_on:
@@ -58,7 +59,7 @@
     ```
     *Replace the values of `NETWORK`, `PORTS`, `INTERVAL`, etc. with yours*<br>
     Run `docker-compose up -d` *(or `docker compose up -d` if you use `docker-compose-plugin` for `Docker CE`)* to start the containers.
-    
+
 - Using `docker run`<br>
   You can use the following command to run the container:
   - Run **MySQL** container:
@@ -167,7 +168,7 @@ In the `Scan`, specify the scan parameters (if you press `Enter` without specify
 Using with arguments:<br>
 Try `python network_monitor.py -h`:
 ```log
-usage: network_monitor.py [-h] [--config | --scan] [--network NETWORK] [--ports PORTS] [--interval INTERVAL] [--db_host DB_HOST] [--db_user DB_USER] [--db_password DB_PASSWORD] [--db_name DB_NAME]
+usage: network_monitor.py [-h] [--config | --scan | --no-progressbar] [--network NETWORK] [--ports PORTS] [--interval INTERVAL] [--db_host DB_HOST] [--db_user DB_USER] [--db_password DB_PASSWORD] [--db_name DB_NAME]
                           [--flask_host FLASK_HOST] [--flask_port FLASK_PORT] [--flask_debug FLASK_DEBUG] [--default_network DEFAULT_NETWORK] [--default_ports DEFAULT_PORTS]
                           [--default_interval DEFAULT_INTERVAL] [--spd_test SPD_TEST]
 
@@ -177,6 +178,7 @@ options:
   -h, --help            show this help message and exit
   --config              Run configuration
   --scan                Run scan
+  --no-progressbar      Disable progress bar
 
 Scan Arguments:
   --network NETWORK     Network to scan
@@ -203,18 +205,18 @@ Configuration Arguments:
                         Default interval
   --spd_test SPD_TEST   Speedtest before scan
 ```
-For configuration only use 
+For configuration only use
 ```
 python network_monitor.py --config --db_host <host> --db_user <user> --db_password <password> --db_name <db name> --flask_host <flask host> --flask_port <flask port> --flask_debug <True/False> --default_network <network> --default_ports <ports> --default_interval <interval> --spd_test <True/False>
 ```
 For scan use
 ```
-python network_monitor.py --scan --network <network> --ports <ports> --interval <interval>
+python network_monitor.py --scan --network <network> --ports <ports> --interval <interval> [--no-progressbar]
 ```
 
 ---
 
-After information about the found devices appears, try making a `GET` request to `<your ip>:<port(default 5000)>/api/scans`
+After information about the found devices appears, try making a `GET` request to `<your ip>:<port>/api/scans`
 
 Response example in `Json` format:
 ```json
@@ -239,7 +241,7 @@ Response example in `Json` format:
  ]
 ]
 ```
-if you want to get information about a specific device, send a `GET` request to `<your ip>:<port(default 5000)>/api/scans/<device ip address>`
+if you want to get information about a specific device, send a `GET` request to `<your ip>:<port>/api/scans/<device ip address>`
 
 Response example in `Json` format:
 ```json
@@ -256,7 +258,7 @@ Response example in `Json` format:
 
 ---
 
-- ### API documentation - `<ip>:<port(default 5000>/apidocs`
+- ### API documentation - `<ip>:<port>/apidocs`
   The API key can be found in the container logs, or in app/config.py
 
 ---

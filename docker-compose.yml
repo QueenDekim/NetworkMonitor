@@ -1,6 +1,7 @@
 services:
   app:
     image: ghcr.io/queendekim/networkmonitor:latest
+    restart: always
     volumes:
       - ./app:/app
     depends_on:
