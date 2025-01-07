@@ -10,7 +10,7 @@ DB_CONFIG = {
 VENV = {
     'PATH': os.path.join('.', 'venv'),
     'API_KEY': '',
-    'VERSION': '1.2.0'
+    'VERSION': '1.1.6.1'
 }
 
 FLASK_CONFIG = {

@@ -42,7 +42,7 @@ def get_scan_data():
     except Exception as e:
         print(f"Error: {e}")
         return None
-    
+
 def get_scan_data_by_ip(ip):
     # Function to retrieve scan data by IP address
     conn = connect_to_db()
@@ -70,11 +70,11 @@ def update_or_create_scan(scan_data):
         if row is not None:
             # Update existing record
             cursor.execute("UPDATE scans SET status = %s, device_info = %s, domain = %s WHERE ip = %s",
-                           (scan_data[0][1], json.dumps(scan_data[0][2]), scan_data[0][3], scan_data[0][0]))
+                          (scan_data[0][1], json.dumps(scan_data[0][2]), scan_data[0][3], scan_data[0][0]))
         else:
             # Create a new record
             cursor.execute("INSERT INTO scans (ip, status, device_info, domain) VALUES (%s, %s, %s, %s)",
-                           (scan_data[0][0], scan_data[0][1], json.dumps(scan_data[0][2]), scan_data[0][3]))
+                          (scan_data[0][0], scan_data[0][1], json.dumps(scan_data[0][2]), scan_data[0][3]))
 
         conn.commit()
         return True
@@ -104,7 +104,7 @@ def get_ports_by_ip(ip):
 def fetch_scan_data():
     """
     Fetch scan data from the database.
-    
+
     Returns:
         list: A list of scan records.
     """
@@ -119,17 +119,17 @@ def fetch_scan_data():
 def generate_pdf_report(scans):
     """
     Generate a PDF report based on scan data.
-    
+
     Args:
         scans (list): A list of scan records.
-    
+
     Returns:
         str: The path to the generated PDF file.
     """
     # Create a PDF report
     pdf = FPDF()
     pdf.add_page()
-    
+
     # Set the built-in Arial font
     pdf.set_font("Arial", size=10)
 
@@ -171,17 +171,17 @@ def get_latest_log():
     log_pattern = os.path.join('logs', 'flask_*.log')
     # Find all files matching the pattern
     log_files = glob.glob(log_pattern)
-    
+
     if not log_files:
         return "Log file not found.", 404  # If no log file is found, return 404
-    
+
     # Get the latest log file
     latest_log_file = max(log_files, key=os.path.getctime)
-    
+
     # Read the contents of the log file
     with open(latest_log_file, 'r') as file:
         log_content = file.read()
-    
+
     return log_content, 200  # Return the log file content and status 200
 
 def get_log_by_date(date):
@@ -189,17 +189,17 @@ def get_log_by_date(date):
     log_pattern = os.path.join('logs', f'flask_{date}.log')
     # Find all files matching the pattern
     log_files = glob.glob(log_pattern)
-    
+
     if not log_files:
         return "Log file not found.", 404  # If no log file is found, return 404
-    
+
     # Get the latest log file
     latest_log_file = max(log_files, key=os.path.getctime)
-    
+
     # Read the contents of the log file
     with open(latest_log_file, 'r') as file:
         log_content = file.read()
-    
+
     return log_content, 200  # Return the log file content and status 200
 
 def get_log_routes():
@@ -271,8 +271,8 @@ def index():
 def favicon():
     # Serve the favicon.ico file from the 'static' directory of the application
     return send_from_directory(os.path.join('.', 'static'),   # Construct the path to the 'static' directory
-                               'favicon.ico',                           # Specify the favicon file to be served
-                               mimetype='image/vnd.microsoft.icon')     # Set the MIME type for the favicon
+                              'favicon.ico',                           # Specify the favicon file to be served
+                              mimetype='image/vnd.microsoft.icon')     # Set the MIME type for the favicon
 
 @app.route('/ToS')              # Define a route for Terms of Service
 def terms_of_service():
@@ -375,7 +375,7 @@ def get_ports(ip):
         return jsonify(ports)
     else:
         return jsonify({"error": "Not found"}), 404
-    
+
 @app.route('/api/scans/page/<int:page>', methods=['GET']) # Define the route for paginated scan data
 def get_scans_paginated(page):
     """
@@ -541,7 +541,7 @@ def create_or_update_scan():
                     - type: string
                       description: "Mac Address"
                       example: "00:15:5d:7b:09:06"
-                
+
     responses:
       201:
         description: Scan created or updated successfully

@@ -21,7 +21,7 @@ import speedtest                                                    # Import the
 from getmac import get_mac_address                                  # Import get_mac_address to retrieve MAC addresses of devices
 from datetime import datetime                                       # Import datetime for working with dates and times
 import ipaddress                                                    # Import ipaddress for working with IP addresses
-from tqdm import tqdm
+from tqdm import tqdm                                               # Import tqdm for progress bars
 
 #-----------------#
 # Global variables to manage the API process state
@@ -95,27 +95,27 @@ def initialize_database(cursor):
             tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Cheking database...")
             cursor.execute("SHOW DATABASES LIKE 'network_monitoring'")
             result = cursor.fetchone()
-            
+
             if not result:
                 # Create the database if it does not exist
                 cursor.execute("CREATE DATABASE network_monitoring")
                 tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' created.")
             else:
                 tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Database 'network_monitoring' exists.")
-            
+
             # Switch to the network_monitoring database
             try:
                 cursor.execute("USE network_monitoring")
             except Exception as e:
                 tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
 
-            
+
             tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Cheking database table...")
             # Check if the scans table exists
             try:
                 cursor.execute("SHOW TABLES LIKE 'scans'")
                 result = cursor.fetchone()
-                
+
                 if not result:
                     # Create the scans table if it does not exist
                     cursor.execute("""
@@ -131,14 +131,14 @@ def initialize_database(cursor):
                         )
                     """)
                     tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' created in 'network_monitoring' database.")
-                else: 
+                else:
                     tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Table 'scans' exists.")
             except Exception as e:
                 tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")
             # If the request is successful, exit the loop
     except pymysql.err.OperationalError:
         tqdm.write(Fore.RED + "[db]" + Fore.WHITE + " MySQL is not available. Retrying in 5 seconds...")
-        time.sleep(5)  # Wait 5 seconds before trying again   
+        time.sleep(5)  # Wait 5 seconds before trying again
     except Exception as e:
         tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error initializing database: {e}")
 
@@ -163,10 +163,10 @@ def spd_test():
 def humansize(nbytes):
     """
     Convert a number of bytes into a human-readable format (e.g., KB, MB, GB).
-    
+
     Parameters:
         nbytes (int): The number of bytes to convert.
-    
+
     Returns:
         str: A string representing the size in a human-readable format.
     """
@@ -177,7 +177,7 @@ def humansize(nbytes):
     while nbytes >= 1024 and i < len(suffixes) - 1:
         nbytes /= 1024.0                            # Divide by 1024 to convert to the next size
         i += 1                                      # Increment the index for the suffixes
-    
+
     f = ('%.2f' % nbytes).rstrip('0').rstrip('.')   # Format the number to two decimal places and remove trailing zeros
     return '%s %s' % (f, suffixes[i])               # Return the formatted size with the appropriate suffix
 
@@ -203,7 +203,7 @@ def start_api():
             python_executable = os.path.join(VENV['PATH'], 'Scripts', 'python.exe')
         else:
             python_executable = os.path.join(VENV['PATH'], 'bin', 'python')
-        
+
         if not os.path.exists('logs'):
             os.makedirs('logs')  # Create the logs directory
 
@@ -218,14 +218,14 @@ def start_api():
                 stderr=log_file
             )
             tqdm.write(Fore.YELLOW + "[API]" + Fore.WHITE + " REST API started at " + Fore.CYAN + f"http://{FLASK_CONFIG['HOST']}:{FLASK_CONFIG['PORT']}" + Fore.WHITE)
-        
+
         api_started = True      # Set the api_started flag to True indicating the API has started
         return 0
     except Exception as e:
         tqdm.write(Fore.RED + "[ERR]" + Fore.WHITE + f" Failed to start 'rest_api.py'. {e}")
         api_started = False     # Set the api_started flag to False indicating the API did not start
         return 1
-    
+
 #-----------------#
 # Helper function to prompt the user for input with exception handling.
 def get_user_input(prompt, default_value=None):
@@ -269,14 +269,14 @@ def parse_network_range(network_range):
         net = net.strip()
         # Split into parts by dots
         parts = net.split('.')
-        
+
         # Generate all possible combinations for each octet
         def generate_addresses(parts, index):
             if index == len(parts):
                 # If we reached the end, form the address
                 networks.append('.'.join(parts))
                 return
-            
+
             if '-' in parts[index]:
                 # If there is a range, split it
                 start, end = map(int, parts[index].split('-'))
@@ -292,12 +292,12 @@ def parse_network_range(network_range):
 
 #-----------------#
 # Scans the specified network for devices and updates the database with the results.
-def scan_network(network_range, ports):
+def scan_network(network_range, ports, no_progressbar=False):
     # Generate all networks from the range
     networks = parse_network_range(network_range)
-    
+
     total_hosts = len(networks)
-    with tqdm(total=total_hosts, desc=f"{Fore.CYAN}Scanning", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}]" + Fore.WHITE, ncols=100, leave=True) as pbar:
+    if no_progressbar:
         for network in networks:
             nm = initialize_nmap()  # Initialize nmap
             if not nm:
@@ -305,12 +305,25 @@ def scan_network(network_range, ports):
             # Perform scanning for each network
             if not perform_scan(nm, network, ports):
                 return
-            
+
             with DatabaseConnection() as cursor:
-                process_scan_results(nm, cursor, network)  # Passing the current network
-            
-            pbar.update(1)
-            
+                process_scan_results(nm, cursor, network, None)  # No progress bar
+
+    else:
+        with tqdm(total=total_hosts, desc=f"{Fore.CYAN}Scanning", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}]" + Fore.WHITE, ncols=100, leave=True) as pbar:
+            for network in networks:
+                nm = initialize_nmap()  # Initialize nmap
+                if not nm:
+                    return
+                # Perform scanning for each network
+                if not perform_scan(nm, network, ports):
+                    return
+
+                with DatabaseConnection() as cursor:
+                    process_scan_results(nm, cursor, network, pbar)  # Passing the current network
+
+                pbar.update(1)
+
 #-----------------#
 # Initializes and returns an nmap PortScanner instance.
 def initialize_nmap():
@@ -330,7 +343,7 @@ def perform_scan(nm, network, ports):
         tqdm.write(Fore.YELLOW + "[nmap]" + Fore.WHITE + f" Starting scan on network {Fore.GREEN}{network}{Fore.WHITE} with ports {Fore.GREEN}{ports}{Fore.WHITE}...")
         # Execute the scan with version detection, specified ports, and a fast timing template
         nm.scan(hosts=network, arguments=f'-sV -p {ports} -T5 --unprivileged', timeout=1200)
-        
+
         tqdm.write(Fore.YELLOW + "[nmap]" + Fore.WHITE + " Scan completed.")
         return True     # Return True to indicate the scan was successful
     except Exception as e:
@@ -341,16 +354,16 @@ def perform_scan(nm, network, ports):
 def normalize_device_info(device_info):
     """
     Normalizes device information to a consistent format.
-    
+
     Args:
         device_info (str): A string containing device information in JSON format.
-    
+
     Returns:
         str: A normalized string with device information in JSON format.
     """
     # Deserialize the JSON string into a dictionary
     device_info_dict = json.loads(device_info)
-    
+
     # Sort keys and create a new dictionary
     normalized_info = {
         "hostname": device_info_dict.get("hostname", ""),
@@ -361,41 +374,45 @@ def normalize_device_info(device_info):
 
 #-----------------#
 # Processes scan results and updates the database with device information.
-def process_scan_results(nm, cursor, network):
+def process_scan_results(nm, cursor, network, pbar):
     # Check if the database cursor is available
     if cursor is None:
         tqdm.write(Fore.RED + "[db]" + Fore.WHITE + " No database cursor available. Exiting process scan results.")
         return
-    
+
     found_hosts = set()  # Initialize a set to keep track of found hosts
 
     # Iterate through all hosts found in the network scan
     for host in nm.all_hosts():
         status = nm[host].state()  # Get the current state of the host
         device_info_json, _ = get_device_info_json(nm, host)  # Retrieve device information in JSON format
-        
+
         # Get the network address from the provided network
         network_address = str(ipaddress.ip_network(f"{network}", strict=False).network_address)
         tqdm.write(Fore.YELLOW + "[network]" + Fore.WHITE + f" Network address: {Fore.GREEN}{network_address}")
-        
+        pbar.refresh()
         try:
             # Attempt to get the MAC address of the host
             mac_address = get_mac_address(ip=host)
             if mac_address:
                 tqdm.write(Fore.YELLOW + "[mac]" + Fore.WHITE + f" Found MAC address {Fore.GREEN}{mac_address}{Fore.WHITE} for host {Fore.GREEN}{host}")
+                pbar.refresh()
             else:
                 tqdm.write(Fore.YELLOW + "[mac]" + Fore.WHITE + f" MAC address for the host {Fore.GREEN}{host}{Fore.WHITE} was not found")
                 mac_address = "None"  # Set MAC address to None if not found
+                pbar.refresh()
 
-            try:    
+            try:
                 # Attempt to get the domain name associated with the host
                 addr = socket.gethostbyaddr(host)
                 address = addr[0]  # Get the domain name
                 tqdm.write(Fore.YELLOW + "[socket]" + Fore.WHITE + f"Found domain name {Fore.GREEN}{addr[0]}{Fore.WHITE} on host {Fore.GREEN}{host}{Fore.WHITE}")
+                pbar.refresh()
             except:
                 address = "None"  # Set address to None if not found
                 tqdm.write(Fore.YELLOW + "[socket]" + Fore.WHITE + f" No domain name found on host {Fore.GREEN}{host}")
-                
+                pbar.refresh()
+
             # Check if the device already exists in the database
             cursor.execute("SELECT device_info FROM scans WHERE ip = %s", (host,))
             result = cursor.fetchone()  # Fetch the result
@@ -408,9 +425,11 @@ def process_scan_results(nm, cursor, network):
                 insert_device_info(cursor, status, device_info_json, host, address, network_address, mac_address)
 
             found_hosts.add(host)  # Add the host to the found hosts set
+            pbar.refresh()
 
         except Exception as e:
             tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")  # Print any errors encountered
+            pbar.refresh()
 
     try:
         network_address = str(ipaddress.ip_network(f"{network}", strict=False).network_address)
@@ -418,8 +437,10 @@ def process_scan_results(nm, cursor, network):
         update_device_status(cursor, found_hosts, network_address)
         cursor.connection.commit()  # Commit the changes to the database
         tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Database updated successfully.")
+        pbar.refresh()
     except Exception as e:
         tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error updating device status: {e}")  # Print any errors encountered during update
+        pbar.refresh()
 
 #-----------------#
 # Collects device information and returns it as a JSON string.
@@ -455,7 +476,7 @@ def get_device_info_json(nm, host):
                 ports_status.append(Fore.YELLOW + str(port))    # Open ports in green
             elif port_info['state'] == 'closed':
                 ports_status.append(Fore.RED + str(port))       # Closed portsprocess_scan_data in red
-    
+
     ports_status_str = ','.join(ports_status)           # Join the port status list into a single string
 
     return json.dumps(device_info), ports_status_str    # Return the device information as a JSON string and the port status string
@@ -499,13 +520,14 @@ def update_device_info(cursor, status, device_info_json, host, address, existing
 # Updates the status of devices that were not found in the current scan.
 def update_device_status(cursor, found_hosts, network_address):
     # Execute an SQL SELECT statement to retrieve all IP addresses from the scans table
+    tqdm.write(Fore.YELLOW + f"Updating status for network {Fore.GREEN}{network_address}{Fore.WHITE}...")
     try:
-        cursor.execute("SELECT ip FROM scans")
+        cursor.execute("SELECT ip FROM scans WHERE network = %s", (network_address,))
         all_hosts = cursor.fetchall()       # Fetch all results from the executed query
     except Exception as e:
         tqdm.write(Fore.RED + "[db]" + Fore.WHITE + " Error retrieving all hosts: " + str(e))
         return None
-    
+
     # Iterate over each IP address retrieved from the database
     for (ip,) in all_hosts:
         # Check if the current IP address is not in the list of found hosts
@@ -536,7 +558,7 @@ def configure_settings(db_host=None, db_user=None, db_password=None, db_name=Non
     if flask_debug is None:
         flask_debug_input = get_user_input(f"Flask Debug (default: {FLASK_CONFIG['DEBUG']}): ", f"{FLASK_CONFIG['DEBUG']}")
         flask_debug = flask_debug_input.lower() in ['true', '1', 'yes']
-        
+
     # Prompt for default scan values
     if default_network is None:
         tqdm.write(Fore.GREEN + "Default values: " + Fore.WHITE)
@@ -623,7 +645,7 @@ def generate_api_key():
         config_file.write("VENV = {\n")
         config_file.write(f"    'PATH': os.path.join('.', 'venv'),\n")
         config_file.write(f"    'API_KEY': '{api_key}',\n")
-        config_file.write(f"    'VERSION': '{config_data['VENV']['VERSION']}'\n") 
+        config_file.write(f"    'VERSION': '{config_data['VENV']['VERSION']}'\n")
         config_file.write("}\n\n")
         config_file.write("FLASK_CONFIG = {\n")
         config_file.write(f"    'HOST': '{config_data['FLASK_CONFIG']['HOST']}',\n")
@@ -642,11 +664,12 @@ def generate_api_key():
 if __name__ == "__main__":
     # Creating a Command Line Argument parser
     parser = argparse.ArgumentParser(description=f'Network Monitor v{VENV["VERSION"]}')
-    
+
     # Adding mutually exclusive group for scan and config
     exclusive_group = parser.add_mutually_exclusive_group(required=False)
     exclusive_group.add_argument('--config', action='store_true', help='Run configuration')
     exclusive_group.add_argument('--scan', action='store_true', help='Run scan')
+    exclusive_group.add_argument('--no-progressbar', action='store_true', help='Disable progress bar')
 
     # Group for scan arguments
     scan_group = parser.add_argument_group('Scan Arguments')
@@ -697,7 +720,7 @@ if __name__ == "__main__":
         try:
             # Ensure SPD_TEST is capitalized
             spd_test_value = str(args.spd_test).capitalize() if args.spd_test is not None else None
-            
+
             configure_settings(args.db_host, args.db_user, args.db_password, args.db_name, args.flask_host, args.flask_port, args.flask_debug, args.default_network, args.default_ports, args.default_interval, spd_test_value)
             tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Creating database if not exist...")
             with DatabaseConnection() as cursor:
@@ -735,12 +758,12 @@ if __name__ == "__main__":
                     VENV = config.VENV
                     FLASK_CONFIG = config.FLASK_CONFIG
                     SCAN_CONFIG = config.SCAN_CONFIG
-                    initialize_database(cursor)  # Initialize the database and table                    
+                    initialize_database(cursor)  # Initialize the database and table
             except pymysql.err.OperationalError as e:
                 tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: unable to connect to the database: {e}")
-                        
+
             while True:
-                scan_network(args.network, args.ports)  # Performing a network scan
+                scan_network(args.network, args.ports, args.no_progressbar)  # Performing a network scan
                 wait_time = args.interval * 60  # We calculate the waiting time in seconds
                 if args.interval < 1:
                     tqdm.write(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
@@ -753,7 +776,7 @@ if __name__ == "__main__":
 
     # Handle case where no valid arguments are provided
     if not args.config and not args.scan:
-        
+
         # Start of the main program execution
         try:
             clear_console()
@@ -793,10 +816,10 @@ if __name__ == "__main__":
                         if SCAN_CONFIG["SPD_TEST"]:
                             tqdm.write(Fore.YELLOW + "[Speedtest]" + Fore.WHITE + " Checking the connection speed...")
                             spd_test()
-                        
+
                         # Infinite loop to perform scanning at specified intervals
                         while True:
-                            scan_network(network, ports)        # Perform the network scan
+                            scan_network(network, ports, args.no_progressbar)        # Perform the network scan
                             wait_time = float(interval) * 60    # Calculate wait time in seconds
                             if interval < 1:
                                 tqdm.write(Fore.YELLOW + "[Info]" + Fore.WHITE + f" Waiting for {wait_time} seconds before next scan...")
