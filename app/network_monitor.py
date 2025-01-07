@@ -669,7 +669,9 @@ if __name__ == "__main__":
     exclusive_group = parser.add_mutually_exclusive_group(required=False)
     exclusive_group.add_argument('--config', action='store_true', help='Run configuration')
     exclusive_group.add_argument('--scan', action='store_true', help='Run scan')
-    exclusive_group.add_argument('--no-progressbar', action='store_true', help='Disable progress bar')
+
+    # Disable progress bar argument
+    parser.add_argument('--no-progressbar', action='store_true', help='Disable progress bar')
 
     # Group for scan arguments
     scan_group = parser.add_argument_group('Scan Arguments')
