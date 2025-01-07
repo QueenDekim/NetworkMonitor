@@ -168,7 +168,7 @@ In the `Scan`, specify the scan parameters (if you press `Enter` without specify
 Using with arguments:<br>
 Try `python network_monitor.py -h`:
 ```log
-usage: network_monitor.py [-h] [--config | --scan | --no-progressbar] [--network NETWORK] [--ports PORTS] [--interval INTERVAL] [--db_host DB_HOST] [--db_user DB_USER] [--db_password DB_PASSWORD] [--db_name DB_NAME]
+usage: network_monitor.py [-h] [--config | --scan] [--no-progressbar] [--network NETWORK] [--ports PORTS] [--interval INTERVAL] [--db_host DB_HOST] [--db_user DB_USER] [--db_password DB_PASSWORD] [--db_name DB_NAME]
                           [--flask_host FLASK_HOST] [--flask_port FLASK_PORT] [--flask_debug FLASK_DEBUG] [--default_network DEFAULT_NETWORK] [--default_ports DEFAULT_PORTS]
                           [--default_interval DEFAULT_INTERVAL] [--spd_test SPD_TEST]
 
