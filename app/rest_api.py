@@ -160,7 +160,7 @@ def generate_pdf_report(scans):
         pdf.cell(200, 10, text="", ln=True)  # Empty line
 
     # Save the PDF file
-    current_time = datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
+    current_time = datetime.now().strftime("%Y.%m.%d")
     report_path = os.path.join(os.path.dirname(__file__), f"reports/scan_report_{current_time}.pdf")
     pdf.output(report_path)
 
