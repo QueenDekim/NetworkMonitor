@@ -307,7 +307,7 @@ def scan_network(network_range, ports, no_progressbar=False):
                 return
 
             with DatabaseConnection() as cursor:
-                process_scan_results(nm, cursor, network, None)  # No progress bar
+                process_scan_results(nm, cursor, network, None, no_progressbar)  # No progress bar
 
     else:
         with tqdm(total=total_hosts, desc=f"{Fore.CYAN}Scanning", bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}]" + Fore.WHITE, ncols=100, leave=True) as pbar:
@@ -320,7 +320,7 @@ def scan_network(network_range, ports, no_progressbar=False):
                     return
 
                 with DatabaseConnection() as cursor:
-                    process_scan_results(nm, cursor, network, pbar)  # Passing the current network
+                    process_scan_results(nm, cursor, network, pbar, no_progressbar)  # Passing the current network
 
                 pbar.update(1)
 
@@ -374,7 +374,7 @@ def normalize_device_info(device_info):
 
 #-----------------#
 # Processes scan results and updates the database with device information.
-def process_scan_results(nm, cursor, network, pbar):
+def process_scan_results(nm, cursor, network, pbar, no_progressbar):
     # Check if the database cursor is available
     if cursor is None:
         tqdm.write(Fore.RED + "[db]" + Fore.WHITE + " No database cursor available. Exiting process scan results.")
@@ -390,28 +390,33 @@ def process_scan_results(nm, cursor, network, pbar):
         # Get the network address from the provided network
         network_address = str(ipaddress.ip_network(f"{network}", strict=False).network_address)
         tqdm.write(Fore.YELLOW + "[network]" + Fore.WHITE + f" Network address: {Fore.GREEN}{network_address}")
-        pbar.refresh()
+        if no_progressbar == False:
+            pbar.refresh()
         try:
             # Attempt to get the MAC address of the host
             mac_address = get_mac_address(ip=host)
             if mac_address:
                 tqdm.write(Fore.YELLOW + "[mac]" + Fore.WHITE + f" Found MAC address {Fore.GREEN}{mac_address}{Fore.WHITE} for host {Fore.GREEN}{host}")
-                pbar.refresh()
+                if no_progressbar == False:
+                    pbar.refresh()
             else:
                 tqdm.write(Fore.YELLOW + "[mac]" + Fore.WHITE + f" MAC address for the host {Fore.GREEN}{host}{Fore.WHITE} was not found")
                 mac_address = "None"  # Set MAC address to None if not found
-                pbar.refresh()
+                if no_progressbar == False:
+                    pbar.refresh()
 
             try:
                 # Attempt to get the domain name associated with the host
                 addr = socket.gethostbyaddr(host)
                 address = addr[0]  # Get the domain name
                 tqdm.write(Fore.YELLOW + "[socket]" + Fore.WHITE + f"Found domain name {Fore.GREEN}{addr[0]}{Fore.WHITE} on host {Fore.GREEN}{host}{Fore.WHITE}")
-                pbar.refresh()
+                if no_progressbar == False:
+                    pbar.refresh()
             except:
                 address = "None"  # Set address to None if not found
                 tqdm.write(Fore.YELLOW + "[socket]" + Fore.WHITE + f" No domain name found on host {Fore.GREEN}{host}")
-                pbar.refresh()
+                if no_progressbar == False:
+                    pbar.refresh()
 
             # Check if the device already exists in the database
             cursor.execute("SELECT device_info FROM scans WHERE ip = %s", (host,))
@@ -425,11 +430,13 @@ def process_scan_results(nm, cursor, network, pbar):
                 insert_device_info(cursor, status, device_info_json, host, address, network_address, mac_address)
 
             found_hosts.add(host)  # Add the host to the found hosts set
-            pbar.refresh()
+            if no_progressbar == False:
+                pbar.refresh()
 
         except Exception as e:
             tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error: {e}")  # Print any errors encountered
-            pbar.refresh()
+            if no_progressbar == False:
+                pbar.refresh()
 
     try:
         network_address = str(ipaddress.ip_network(f"{network}", strict=False).network_address)
@@ -437,10 +444,12 @@ def process_scan_results(nm, cursor, network, pbar):
         update_device_status(cursor, found_hosts, network_address)
         cursor.connection.commit()  # Commit the changes to the database
         tqdm.write(Fore.YELLOW + "[db]" + Fore.WHITE + " Database updated successfully.")
-        pbar.refresh()
+        if no_progressbar == False:
+            pbar.refresh()
     except Exception as e:
         tqdm.write(Fore.RED + "[db]" + Fore.WHITE + f" Error updating device status: {e}")  # Print any errors encountered during update
-        pbar.refresh()
+        if no_progressbar == False:
+            pbar.refresh()
 
 #-----------------#
 # Collects device information and returns it as a JSON string.
