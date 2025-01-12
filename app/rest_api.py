@@ -6,7 +6,6 @@ from config import DB_CONFIG, FLASK_CONFIG, VENV                            # Im
 import os                                                                   # Import os for interacting with the operating system (e.g., file paths, environment variables)
 from flasgger import Swagger                                                # Importing Swagger for API documentation
 import json                                                                 # Import json for working with JSON data
-from fpdf import FPDF                                                       # Import FPDF for generating PDF reports
 from datetime import datetime                                               # Import datetime for working with dates and times
 import glob                                                                 # Import glob for working with file paths
 
@@ -98,8 +97,8 @@ def get_ports_by_ip(ip):
         print(f"Error: {e}")  # Print the error message if an exception occurs
         return None
     finally:
-        cursor.close()  # Close the cursor
-        conn.close()    # Close the database connection
+        cursor.close()        # Close the cursor
+        conn.close()          # Close the database connection
 
 def fetch_scan_data():
     """
@@ -111,60 +110,11 @@ def fetch_scan_data():
     conn = connect_to_db()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM scans ORDER BY id ASC")
-    scans = cursor.fetchall()  # Fetch all scan records
-    cursor.close()  # Close the cursor
-    conn.close()    # Close the database connection
+    scans = cursor.fetchall()   # Fetch all scan records
+    cursor.close()              # Close the cursor
+    conn.close()                # Close the database connection
     return scans
 
-def generate_pdf_report(scans):
-    """
-    Generate a PDF report based on scan data.
-
-    Args:
-        scans (list): A list of scan records.
-
-    Returns:
-        str: The path to the generated PDF file.
-    """
-    # Create a PDF report
-    pdf = FPDF()
-    pdf.add_page()
-
-    # Set the built-in Arial font
-    pdf.set_font("Arial", size=10)
-
-    # Report title
-    pdf.cell(200, 10, txt="Network Scan Report", ln=True, align='C')  # Title in English
-    pdf.cell(200, 10, txt="", ln=True)  # Empty line
-
-    # Information about the number of hosts
-    up_hosts = [scan for scan in scans if scan[2] == 'up']
-    down_hosts = [scan for scan in scans if scan[2] == 'down']
-    up_count = len(up_hosts)
-    down_count = len(down_hosts)
-    pdf.cell(0, 10, txt=f"Number of hosts found: Up - {up_count}, Down - {down_count}", ln=True)  # Information in English
-    pdf.cell(200, 10, txt="", ln=True)  # Empty line
-
-    # Add scan data
-    for scan in scans:
-        # Convert text to Latin or use only supported characters
-        pdf.cell(0, 10, txt=f"IP: {scan[1]}, Status: {scan[2]}, Date: {scan[4]}", ln=True)
-
-        # Get port information for the current host
-        device_info = json.loads(scan[3])  # Assuming device_info stores JSON
-        if 'ports' in device_info:
-            pdf.cell(0, 10, txt="Ports:", ln=True)
-            for port_info in device_info['ports']:
-                pdf.cell(0, 10, txt=f"{port_info['port']} | {port_info['name']} | {port_info['state']}", ln=True)
-
-        pdf.cell(200, 10, text="", ln=True)  # Empty line
-
-    # Save the PDF file
-    current_time = datetime.now().strftime("%Y.%m.%d")
-    report_path = os.path.join(os.path.dirname(__file__), f"reports/scan_report_{current_time}.pdf")
-    pdf.output(report_path)
-
-    return report_path
 
 def get_latest_log():
     # Create a pattern to search for all log files
@@ -575,30 +525,7 @@ def create_or_update_scan():
     else:
         return jsonify({"error": "Internal server error"}), 500
 
-@app.route('/api/report', methods=['GET'])  # Define the route for generating a report
-def generate_report():
-    """
-    Generate a scan report
-    ---
-    responses:
-      200:
-        description: Scan report in PDF format
-      500:
-        description: Internal server error
-    """
-    try:
-        # Get scan data
-        scans = fetch_scan_data()
 
-        # Generate PDF report
-        report_path = generate_pdf_report(scans)
-
-        # Return the PDF file in the response
-        return send_file(report_path, as_attachment=True)
-
-    except Exception as e:
-        print(f"Error generating report: {e}")
-        return jsonify({"error": "Internal server error", "details": str(e)}), 500
 
 @app.route('/api/logs/latest', methods=['GET']) # Define the route for getting the latest log file
 def get_latest_log_route():
